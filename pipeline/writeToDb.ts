@@ -15,12 +15,12 @@ function computeUsedInSection(item: RawNewsItem, report: SynthesizedReport): str
     if (text && text.includes(item.url)) used.push(name);
   }
   for (const pick of report.stock_picks) {
-    if (pick.source_urls.includes(item.url) || pick.rationale_md.includes(item.url)) {
+    if ((pick.source_urls ?? []).includes(item.url) || pick.rationale_md?.includes(item.url)) {
       used.push(`stock_pick:${pick.ticker}`);
     }
   }
   for (const note of report.trend_notes) {
-    if (note.source_urls.includes(item.url) || note.note_md.includes(item.url)) {
+    if ((note.source_urls ?? []).includes(item.url) || note.note_md?.includes(item.url)) {
       used.push(`trend_note:${note.category}`);
     }
   }
@@ -92,7 +92,7 @@ export async function writeReportToDb(
       claude_rating: pick.claude_rating,
       position_size_pct: pick.position_size_pct,
       rationale_md: pick.rationale_md,
-      source_urls: pick.source_urls,
+      source_urls: pick.source_urls ?? [],
       data_source_note: fin?.data_source_note ?? null,
     };
   });
@@ -107,7 +107,7 @@ export async function writeReportToDb(
     report_date: reportDate,
     category: note.category,
     note_md: note.note_md,
-    source_urls: note.source_urls,
+    source_urls: note.source_urls ?? [],
     confidence: note.confidence,
   }));
   if (noteRows.length > 0) {
