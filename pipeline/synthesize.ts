@@ -132,7 +132,14 @@ ${financialsBlock}
 3. 个股建议必须结合上面提供的量化数据(现价、PE、EV/EBITDA、目标价)给出具体的估值倍数对比和目标价参考;如果某个数据字段为 N/A,要在建议中说明"该数据当前无法获取"而不是编造数字。
 4. stock_picks 需要覆盖上面列出的所有跟踪个股。
 5. 亚太地区投资动态和地缘政治板块要重点突出,不要写成泛泛而谈的套话,要引用具体新闻事件。
-6. 如果抓到的新闻数量很少或缺失某个地区的新闻,如实在对应板块说明"今日未抓取到该地区的相关新闻",不要编造。`;
+6. 如果抓到的新闻数量很少或缺失某个地区的新闻,如实在对应板块说明"今日未抓取到该地区的相关新闻",不要编造。
+
+篇幅限制(重要,严格遵守,避免输出超长被截断):
+- news_summary_md、apac_investment_md、geopolitics_md、competitive_md:每个板块控制在300字以内。
+- trend_judgment_md:控制在400字以内。
+- 每支个股的 rationale_md:控制在120字以内,只写最核心的估值对比和结论,不要展开背景介绍。
+- 每条 trend_notes 的 note_md:控制在100字以内。
+- 宁可简洁精炼,也不要因为追求详尽而导致输出被截断。`;
 }
 
 export async function synthesizeReport(
@@ -156,12 +163,16 @@ export async function synthesizeReport(
 
   const stream = client.messages.stream({
     model: MODEL,
-    max_tokens: 32000,
+    max_tokens: 48000,
     tools: [REPORT_TOOL],
     tool_choice: { type: "tool", name: "submit_report" },
     messages: [{ role: "user", content: prompt }],
   });
   const response = await stream.finalMessage();
+
+  console.log(
+    `[synthesize] stop_reason=${response.stop_reason} 输入token=${response.usage.input_tokens} 输出token=${response.usage.output_tokens}`
+  );
 
   if (response.stop_reason === "max_tokens") {
     throw new Error(
@@ -177,9 +188,7 @@ export async function synthesizeReport(
   }
 
   const report = toolUseBlock.input as SynthesizedReport;
-  console.log(
-    `[synthesize] 完成,输入token=${response.usage.input_tokens} 输出token=${response.usage.output_tokens}`
-  );
+  console.log(`[synthesize] 结构化报告解析成功`);
 
   return {
     report,
