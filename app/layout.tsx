@@ -44,6 +44,9 @@ export default function RootLayout({
               <Link href="/archive" className="transition-colors hover:text-accent">
                 历史归档
               </Link>
+              <Link href="/sea" className="transition-colors hover:text-accent">
+                选址分析
+              </Link>
             </nav>
           </div>
         </header>

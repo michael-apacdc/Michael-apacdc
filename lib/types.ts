@@ -173,3 +173,101 @@ export interface RawSynthesizedReport {
   stock_picks: RawSynthesizedStockPick[];
   trend_notes: RawSynthesizedTrendNote[];
 }
+
+// ============ Phase 2: 东南亚/亚太数据中心选址分析 ============
+
+export type SeaCountryCode = "SG" | "MY" | "TH" | "ID" | "JP" | "AU";
+
+export type FitVerdict = "strong_fit" | "partial_fit" | "weak_fit" | "insufficient_data";
+
+export interface SeaCountry {
+  code: SeaCountryCode;
+  name_zh: string;
+}
+
+export interface SeaCountryOutlook {
+  id: string;
+  report_date: string;
+  country_code: SeaCountryCode;
+  attractiveness_score: number | null;
+  rank_position: number | null;
+  outlook_md: string;
+  source_urls: string[];
+}
+
+export interface SeaDeal {
+  id: string;
+  report_date: string;
+  country_code: SeaCountryCode;
+  company: string;
+  headline: string;
+  deal_summary_md: string;
+  land_location: string | null;
+  power_score: number | null;
+  power_notes_md: string | null;
+  connectivity_score: number | null;
+  connectivity_notes_md: string | null;
+  land_civil_score: number | null;
+  land_civil_notes_md: string | null;
+  policy_score: number | null;
+  policy_notes_md: string | null;
+  climate_cooling_score: number | null;
+  climate_cooling_notes_md: string | null;
+  risk_score: number | null;
+  risk_notes_md: string | null;
+  overall_score: number | null;
+  fit_verdict: FitVerdict | null;
+  source_urls: string[];
+}
+
+// Claude 对每条土地/电力交易新闻的原始打分(1-5分,信息未披露时为 null),
+// 引用来源同样用 source_news_ids 编号,由 resolveSeaCitations() 换成真实链接。
+export interface RawSeaDealScore {
+  country_code: SeaCountryCode;
+  company: string;
+  headline: string;
+  deal_summary_md: string;
+  land_location: string | null;
+  power_score: number | null;
+  power_notes_md: string;
+  connectivity_score: number | null;
+  connectivity_notes_md: string;
+  land_civil_score: number | null;
+  land_civil_notes_md: string;
+  policy_score: number | null;
+  policy_notes_md: string;
+  climate_cooling_score: number | null;
+  climate_cooling_notes_md: string;
+  risk_score: number | null;
+  risk_notes_md: string;
+  source_news_ids: number[];
+}
+
+export interface RawSeaCountryOutlook {
+  country_code: SeaCountryCode;
+  attractiveness_score: number;
+  rank_position: number;
+  outlook_md: string;
+  source_news_ids: number[];
+}
+
+export interface RawSeaReport {
+  deals: RawSeaDealScore[];
+  country_outlook: RawSeaCountryOutlook[];
+}
+
+// 解析后(引用编号已替换成真实网址)的最终结构,直接对应 writeSeaToDb 要写入的字段
+export interface ResolvedSeaDeal extends Omit<RawSeaDealScore, "source_news_ids"> {
+  overall_score: number;
+  fit_verdict: FitVerdict;
+  source_urls: string[];
+}
+
+export interface ResolvedSeaCountryOutlook extends Omit<RawSeaCountryOutlook, "source_news_ids"> {
+  source_urls: string[];
+}
+
+export interface ResolvedSeaReport {
+  deals: ResolvedSeaDeal[];
+  country_outlook: ResolvedSeaCountryOutlook[];
+}

@@ -4,8 +4,10 @@
 
 ## 这是什么
 
-- 每天(北京时间上午9点左右)自动运行一次:抓新闻 → 抓个股金融数据 → 用 Claude 生成结构化分析报告 → 存进数据库 → 网页自动展示。
-- 网页有4类页面:今日报告(`/`)、历史归档(`/archive`)、单只股票的历史趋势图(`/ticker/NVDA` 等)。
+- 每天(北京时间上午9点左右)自动运行两条流水线:
+  1. **行业日报**:抓新闻 → 抓个股金融数据 → 用 Claude 生成结构化分析报告 → 存进数据库 → 网页展示。
+  2. **亚太选址分析**(Phase 2):抓新加坡/马来西亚/泰国/印尼/日本/澳大利亚的数据中心拿地/电力协议新闻 → 按六维度选址框架(电力38%/连接22%/土地工程15%/税收政策12%/气候水资源8%/风险5%)打分 → 生成六国投资热度排名。
+- 网页页面:今日报告(`/`)、历史归档(`/archive`)、单只股票的历史趋势图(`/ticker/NVDA` 等)、亚太选址分析(`/sea`)。
 - 不需要登录 —— 谁拿到网页链接谁就能看,适合内部分享给团队,但请注意"链接可访问"不等于"私密",不要把链接发到公开渠道。
 
 ## 账号注册清单(第一次搭建时,按顺序做)
@@ -18,7 +20,7 @@
    - Project URL
    - `anon` `public` key(公开可用)
    - `service_role` key(**机密**,只用在流水线,不要给前端用)
-6. 在 Supabase 项目的 SQL Editor 里,把 [`supabase/schema.sql`](supabase/schema.sql) 的内容粘贴进去执行一次,建好全部数据表。
+6. 在 Supabase 项目的 SQL Editor 里,依次执行 [`supabase/schema.sql`](supabase/schema.sql) 和 [`supabase/schema_sea.sql`](supabase/schema_sea.sql) 的内容,建好全部数据表。
 7. **Vercel**(vercel.com)—— 用 GitHub 账号登录,导入这个仓库作为新项目,会自动部署网页。
 
 ## 配置密钥(两个地方)
@@ -40,10 +42,11 @@
 ```bash
 npm install
 cp pipeline/.env.example .env   # 然后把 .env 里的占位符换成真实的 key
-npm run pipeline                 # 等同于 npx tsx pipeline/run.ts
+npm run pipeline                 # 行业日报,等同于 npx tsx pipeline/run.ts
+npm run pipeline:sea             # 亚太选址分析,等同于 npx tsx pipeline/runSea.ts
 ```
 
-运行时会打印每一步的进度(抓新闻、抓金融数据、调用 Claude、写数据库),最后会打印本次预估花费。运行完可以去 Supabase 的 Table Editor 里检查 `daily_reports` / `stock_picks` / `news_items` / `trend_notes` 这几张表是否有新数据。
+运行时会打印每一步的进度(抓新闻、抓金融数据、调用 Claude、写数据库),最后会打印本次预估花费。运行完可以去 Supabase 的 Table Editor 里检查 `daily_reports` / `stock_picks` / `news_items` / `trend_notes`(行业日报)以及 `sea_deals` / `sea_country_outlook`(选址分析)这几张表是否有新数据。
 
 ## 手动触发一次真实的自动化任务(不用等到第二天早上)
 
