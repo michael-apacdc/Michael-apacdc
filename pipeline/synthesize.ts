@@ -145,20 +145,23 @@ export async function synthesizeReport(
     throw new Error("缺少 ANTHROPIC_API_KEY 环境变量");
   }
 
-  const client = new Anthropic({ apiKey });
+  // 10分钟超时:大上下文+较大max_tokens的请求可能耗时较长,
+  // 用流式(stream)调用而非一次性等待,避免非流式请求的连接超时限制。
+  const client = new Anthropic({ apiKey, timeout: 10 * 60 * 1000 });
   const prompt = buildPrompt(news, financials, reportDate);
 
   console.log(
     `[synthesize] 调用 ${MODEL} 生成报告(新闻${news.length}条,个股${financials.length}支)...`
   );
 
-  const response = await client.messages.create({
+  const stream = client.messages.stream({
     model: MODEL,
     max_tokens: 16000,
     tools: [REPORT_TOOL],
     tool_choice: { type: "tool", name: "submit_report" },
     messages: [{ role: "user", content: prompt }],
   });
+  const response = await stream.finalMessage();
 
   if (response.stop_reason === "max_tokens") {
     throw new Error(

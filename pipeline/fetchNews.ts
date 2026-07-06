@@ -80,7 +80,9 @@ async function fetchOneFeed(
 ): Promise<RawNewsItem[]> {
   try {
     const feed = await parser.parseURL(url);
-    return (feed.items ?? []).slice(0, 20).map((item) => {
+    // 每路查询只取前10条,而非20条:第一次真实运行时264条新闻喂给Claude
+    // 累计到7.5万输入token,导致响应过慢触发了API超时。减半控制输入体积。
+    return (feed.items ?? []).slice(0, 10).map((item) => {
       const rawHeadline = item.title ?? "(无标题)";
       const snippet = item.contentSnippet ?? item.content ?? "";
 
