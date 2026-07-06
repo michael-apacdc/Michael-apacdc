@@ -143,5 +143,33 @@ export interface SynthesizedReport {
   disclaimer_md: string;
   stock_picks: SynthesizedStockPick[];
   trend_notes: SynthesizedTrendNote[];
-  used_in_section: Record<string, string[]>; // url -> section names
+}
+
+// Claude 的原始工具调用输出:引用来源一律用上面新闻列表里的编号(source_news_ids),
+// 绝不让模型自己转抄网址字符串 —— 这些网址(尤其是 Google News 的编码链接)很长,
+// 模型逐字转抄非常容易出错导致链接打不开。真正的网址由 resolveCitations() 按编号查表换入。
+export interface RawSynthesizedStockPick {
+  ticker: string;
+  claude_rating: ClaudeRating;
+  position_size_pct: number | null;
+  rationale_md: string;
+  source_news_ids: number[];
+}
+
+export interface RawSynthesizedTrendNote {
+  category: TrendCategory;
+  note_md: string;
+  source_news_ids: number[];
+  confidence: Confidence;
+}
+
+export interface RawSynthesizedReport {
+  news_summary_md: string;
+  apac_investment_md: string;
+  geopolitics_md: string;
+  trend_judgment_md: string;
+  competitive_md: string;
+  disclaimer_md: string;
+  stock_picks: RawSynthesizedStockPick[];
+  trend_notes: RawSynthesizedTrendNote[];
 }
