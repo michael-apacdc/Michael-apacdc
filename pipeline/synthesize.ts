@@ -154,11 +154,17 @@ export async function synthesizeReport(
 
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 8000,
+    max_tokens: 16000,
     tools: [REPORT_TOOL],
     tool_choice: { type: "tool", name: "submit_report" },
     messages: [{ role: "user", content: prompt }],
   });
+
+  if (response.stop_reason === "max_tokens") {
+    throw new Error(
+      "Claude 输出在达到 max_tokens 上限时被截断,结构化JSON很可能不完整,已放弃本次结果(可以调高 synthesize.ts 里的 max_tokens 后重试)"
+    );
+  }
 
   const toolUseBlock = response.content.find(
     (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
