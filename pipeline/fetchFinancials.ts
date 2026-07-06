@@ -1,36 +1,52 @@
 import type { RawFinancialData } from "../lib/types";
 import tickers from "./tickers.json";
 
-const FMP_BASE = "https://financialmodelingprep.com/api/v3";
+// FMP 在 2025年8月31日 停用了旧版 /api/v3/ 端点(路径参数风格),
+// 新账号必须用 /stable/ 端点(查询参数风格,ticker 用 ?symbol= 传)。
+const FMP_BASE = "https://financialmodelingprep.com/stable";
 const DAILY_REQUEST_CAP = 250; // FMP 免费版每日请求上限
 
 let requestCount = 0;
 
-async function fmpGet<T>(path: string, apiKey: string): Promise<T | null> {
+async function fmpGet<T>(
+  endpoint: string,
+  params: Record<string, string>,
+  apiKey: string
+): Promise<T | null> {
   requestCount += 1;
-  const url = `${FMP_BASE}${path}${path.includes("?") ? "&" : "?"}apikey=${apiKey}`;
+  const query = new URLSearchParams({ ...params, apikey: apiKey });
+  const url = `${FMP_BASE}/${endpoint}?${query.toString()}`;
   const res = await fetch(url);
+  const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(`FMP ${path} 返回 HTTP ${res.status}`);
+    const message =
+      body && typeof body === "object" && "Error Message" in body
+        ? (body as { "Error Message": string })["Error Message"]
+        : `HTTP ${res.status}`;
+    throw new Error(`FMP ${endpoint} 失败: ${message}`);
   }
-  return (await res.json()) as T;
+  // FMP 出错时有时仍返回 200 但 body 里带 "Error Message"
+  if (body && typeof body === "object" && !Array.isArray(body) && "Error Message" in body) {
+    throw new Error(`FMP ${endpoint} 失败: ${(body as { "Error Message": string })["Error Message"]}`);
+  }
+  return body as T;
 }
 
 interface FmpQuote {
   symbol: string;
   price: number;
-  pe: number | null;
 }
 
-interface FmpRatios {
-  priceEarningsRatioTTM?: number | null;
+interface FmpRatiosTtm {
+  priceToEarningsRatioTTM?: number | null;
+  // 字段名在 FMP 文档里未完全确认,做多候选兜底
+  evToEBITDATTM?: number | null;
   enterpriseValueMultipleTTM?: number | null;
 }
 
 interface FmpPriceTargetSummary {
   lastMonthAvgPriceTarget?: number | null;
   lastQuarterAvgPriceTarget?: number | null;
-  publishers?: string;
 }
 
 async function fetchOneTicker(ticker: string, apiKey: string): Promise<RawFinancialData> {
@@ -44,20 +60,19 @@ async function fetchOneTicker(ticker: string, apiKey: string): Promise<RawFinanc
   const ratingConsensus: string | null = null; // FMP 免费版暂无独立的分析师评级共识接口
 
   try {
-    const quotes = await fmpGet<FmpQuote[]>(`/quote/${ticker}`, apiKey);
+    const quotes = await fmpGet<FmpQuote[]>("quote", { symbol: ticker }, apiKey);
     if (quotes && quotes[0]) {
       currentPrice = quotes[0].price ?? null;
-      peRatio = quotes[0].pe ?? null;
     }
   } catch (err) {
     notes.push(`现价获取失败: ${(err as Error).message}`);
   }
 
   try {
-    const ratios = await fmpGet<FmpRatios[]>(`/ratios-ttm/${ticker}`, apiKey);
+    const ratios = await fmpGet<FmpRatiosTtm[]>("ratios-ttm", { symbol: ticker }, apiKey);
     if (ratios && ratios[0]) {
-      peRatio = peRatio ?? ratios[0].priceEarningsRatioTTM ?? null;
-      evEbitda = ratios[0].enterpriseValueMultipleTTM ?? null;
+      peRatio = ratios[0].priceToEarningsRatioTTM ?? null;
+      evEbitda = ratios[0].evToEBITDATTM ?? ratios[0].enterpriseValueMultipleTTM ?? null;
     }
   } catch (err) {
     notes.push(`估值倍数获取失败: ${(err as Error).message}`);
@@ -65,10 +80,12 @@ async function fetchOneTicker(ticker: string, apiKey: string): Promise<RawFinanc
 
   // 目标价接口:免费版是否可用未完全确认,优雅降级 —— 失败不影响其他字段
   try {
-    const summary = await fmpGet<FmpPriceTargetSummary>(
-      `/price-target-summary/${ticker}`,
+    const summaries = await fmpGet<FmpPriceTargetSummary[]>(
+      "price-target-summary",
+      { symbol: ticker },
       apiKey
     );
+    const summary = summaries?.[0];
     if (summary) {
       const avg = summary.lastQuarterAvgPriceTarget ?? summary.lastMonthAvgPriceTarget ?? null;
       if (avg != null) {
@@ -80,9 +97,7 @@ async function fetchOneTicker(ticker: string, apiKey: string): Promise<RawFinanc
       }
     }
   } catch (err) {
-    notes.push(
-      `目标价接口不可用(可能是付费版功能): ${(err as Error).message}`
-    );
+    notes.push(`目标价接口不可用(可能是付费版功能): ${(err as Error).message}`);
   }
 
   return {
