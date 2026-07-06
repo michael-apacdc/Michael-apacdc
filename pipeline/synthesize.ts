@@ -252,6 +252,13 @@ export async function synthesizeReport(
   }
 
   const rawReport = toolUseBlock.input as RawSynthesizedReport;
+  console.log(
+    `[synthesize] stock_picks类型=${Array.isArray(rawReport.stock_picks) ? `array(${rawReport.stock_picks.length})` : typeof rawReport.stock_picks} trend_notes类型=${Array.isArray(rawReport.trend_notes) ? `array(${rawReport.trend_notes.length})` : typeof rawReport.trend_notes}`
+  );
+  if (!Array.isArray(rawReport.stock_picks) || !Array.isArray(rawReport.trend_notes)) {
+    console.error(`[synthesize] 原始返回内容(前2000字符): ${JSON.stringify(rawReport).slice(0, 2000)}`);
+    throw new Error("Claude 返回的 stock_picks 或 trend_notes 不是数组,结构不符合预期,已放弃本次结果");
+  }
   const report = resolveCitations(rawReport, news);
   console.log(`[synthesize] 结构化报告解析成功,引用编号已替换为真实链接`);
 
