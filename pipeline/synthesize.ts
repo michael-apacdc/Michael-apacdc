@@ -5,7 +5,9 @@ import type {
   SynthesizedReport,
 } from "../lib/types";
 
-const MODEL = "claude-sonnet-5";
+// 用 Haiku 4.5 而非 Sonnet 5:定价 $1/$5 每百万输入/输出token(约为 Sonnet 5 的一半到三分之一),
+// 对"抽取新闻+财务数据、按格式生成结构化报告"这类任务足够胜任,把每月成本压到几美元量级。
+const MODEL = "claude-haiku-4-5-20251001";
 
 const REPORT_TOOL = {
   name: "submit_report",

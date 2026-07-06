@@ -12,7 +12,7 @@
 
 1. **GitHub**(github.com)—— 免费账号,存代码 + 跑每日自动化任务。
 2. 新建一个仓库(公开或私有都行,公开的话自动化不受免费分钟数限制)。
-3. **Anthropic Console**(console.anthropic.com)—— 注册后去 Billing 绑定支付方式并预充值(建议先充 $20),再去 API Keys 页面生成一个 key。**这是唯一有实质持续费用的一环**,预计每月 $20-60,取决于报告长度和跟踪个股数量。
+3. **Anthropic Console**(console.anthropic.com)—— 注册后去 Billing 绑定支付方式并预充值(建议先充 $10-20),再去 API Keys 页面生成一个 key。**这是唯一有实质持续费用的一环**。流水线用的是 Claude Haiku 4.5($1/百万输入token,$5/百万输出token),预计每天几美分到几毛钱,每月大概 $3-8,具体取决于当天新闻量和报告长度。
 4. **Financial Modeling Prep**(financialmodelingprep.com)—— 注册免费版,拿 API key。免费版限 250次请求/天,目前19支跟踪个股够用。
 5. **Supabase**(supabase.com)—— 可以用 GitHub 账号登录,新建一个免费项目。进项目设置的 API 页面,拿到:
    - Project URL
@@ -58,4 +58,4 @@ npm run pipeline                 # 等同于 npx tsx pipeline/run.ts
 
 ## 技术栈(供参考)
 
-Next.js(网页) + Supabase Postgres(数据库)+ GitHub Actions(每日定时任务)+ Financial Modeling Prep(金融数据)+ Anthropic Claude API(分析生成),部署在 Vercel。托管/数据库/调度/新闻抓取全部免费,唯一持续成本是 Claude API 调用。
+Next.js(网页) + Supabase Postgres(数据库)+ GitHub Actions(每日定时任务)+ Financial Modeling Prep(金融数据)+ Anthropic Claude API(模型:claude-haiku-4-5,分析生成),部署在 Vercel。托管/数据库/调度/新闻抓取全部免费,唯一持续成本是 Claude API 调用(Haiku 4.5 定价下预计每月 $3-8)。

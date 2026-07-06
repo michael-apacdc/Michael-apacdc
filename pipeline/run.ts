@@ -5,9 +5,9 @@ import { synthesizeReport } from "./synthesize";
 import { writeReportToDb } from "./writeToDb";
 import type { RawFinancialData, RawNewsItem } from "../lib/types";
 
-// Anthropic claude-sonnet-5 定价(2026年促销价,美元/百万token),仅用于粗略估算当次花费
-const PRICE_PER_MTOK_INPUT = 2;
-const PRICE_PER_MTOK_OUTPUT = 10;
+// Anthropic claude-haiku-4-5 定价(美元/百万token),仅用于粗略估算当次花费
+const PRICE_PER_MTOK_INPUT = 1;
+const PRICE_PER_MTOK_OUTPUT = 5;
 
 function todayBeijingDate(): string {
   // 报告日期按北京时间(UTC+8)计算,内容以中文/亚太视角为主
