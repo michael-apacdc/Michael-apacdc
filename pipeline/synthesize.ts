@@ -261,6 +261,20 @@ export async function synthesizeReport(
   }
 
   const rawReport = toolUseBlock.input as RawSynthesizedReport;
+
+  // Haiku 偶尔会把数组字段编码成JSON字符串而不是真正的嵌套数组,这里做兼容解析
+  for (const key of ["stock_picks", "trend_notes"] as const) {
+    const value = rawReport[key];
+    if (typeof value === "string") {
+      try {
+        rawReport[key] = JSON.parse(value);
+        console.warn(`[synthesize] ${key} 是字符串编码的JSON,已自动解析为数组`);
+      } catch {
+        // 解析失败,留给下面的类型检查统一报错
+      }
+    }
+  }
+
   console.log(
     `[synthesize] stock_picks类型=${Array.isArray(rawReport.stock_picks) ? `array(${rawReport.stock_picks.length})` : typeof rawReport.stock_picks} trend_notes类型=${Array.isArray(rawReport.trend_notes) ? `array(${rawReport.trend_notes.length})` : typeof rawReport.trend_notes}`
   );
