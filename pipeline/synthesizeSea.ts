@@ -31,11 +31,14 @@ const COUNTRY_NAMES: Record<SeaCountryCode, string> = {
   ID: "印度尼西亚",
   JP: "日本",
   AU: "澳大利亚",
+  KR: "韩国",
 };
+
+const COUNTRY_CODES = Object.keys(COUNTRY_NAMES) as SeaCountryCode[];
 
 const SEA_ANALYSIS_TOOL = {
   name: "submit_sea_analysis",
-  description: "提交亚太数据中心选址分析(逐条土地/电力交易评分 + 六国投资热度排名)",
+  description: "提交亚太数据中心选址分析(逐条土地/电力交易评分 + 七国投资热度排名)",
   input_schema: {
     type: "object" as const,
     properties: {
@@ -45,7 +48,7 @@ const SEA_ANALYSIS_TOOL = {
         items: {
           type: "object",
           properties: {
-            country_code: { type: "string", enum: ["SG", "MY", "TH", "ID", "JP", "AU"] },
+            country_code: { type: "string", enum: ["SG", "MY", "TH", "ID", "JP", "AU", "KR"] },
             company: { type: "string", description: "涉事的数据中心/云厂商/开发商公司名" },
             headline: { type: "string", description: "中文翻译后的新闻标题" },
             deal_summary_md: { type: "string", description: "这条交易的简要说明(80字以内),用[编号]引用来源" },
@@ -113,16 +116,16 @@ const SEA_ANALYSIS_TOOL = {
       },
       country_outlook: {
         type: "array",
-        description: "对全部6个跟踪国家的宏观投资热度判断,必须覆盖SG/MY/TH/ID/JP/AU这6个,即使当天没有具体交易新闻也要给出产业环境层面的判断",
+        description: "对全部7个跟踪国家的宏观投资热度判断,必须覆盖SG/MY/TH/ID/JP/AU/KR这7个,即使当天没有具体交易新闻也要给出产业环境层面的判断",
         items: {
           type: "object",
           properties: {
-            country_code: { type: "string", enum: ["SG", "MY", "TH", "ID", "JP", "AU"] },
+            country_code: { type: "string", enum: ["SG", "MY", "TH", "ID", "JP", "AU", "KR"] },
             attractiveness_score: {
               type: "number",
               description: "0-100的综合投资吸引力评分,越高代表当前越值得作为下一步数据中心投资重点",
             },
-            rank_position: { type: "integer", description: "1-6的排名,1代表最值得关注" },
+            rank_position: { type: "integer", description: "1-7的排名,1代表最值得关注" },
             outlook_md: {
               type: "string",
               description: "150字以内的判断理由,用[编号]引用具体新闻;如果当天没有该国的具体交易新闻,要明确说明'今日未发现具体拿地/电力新闻,以下为产业环境层面的持续观察意见'",
@@ -147,11 +150,11 @@ function buildPrompt(news: RawSeaNewsItem[], reportDate: string): string {
 
   return `你是一名专注于"亚太数据中心选址与土地/电力投资"的资深产业分析师。今天是 ${reportDate}。
 
-以下是过去针对新加坡(SG)、马来西亚(MY)、泰国(TH)、印度尼西亚(ID)、日本(JP)、澳大利亚(AU)抓取到的数据中心"拿地"和"签电力协议"相关新闻,每条前面 [编号] 是引用编号:
+以下是过去针对新加坡(SG)、马来西亚(MY)、泰国(TH)、印度尼西亚(ID)、日本(JP)、澳大利亚(AU)、韩国(KR)抓取到的数据中心"拿地"和"签电力协议"相关新闻,每条前面 [编号] 是引用编号:
 
 ${newsBlock}
 
-请用下面这套选址评估框架,分析新闻里出现的每一条具体交易,并给出六国的宏观投资热度排名。通过 submit_sea_analysis 工具提交。
+请用下面这套选址评估框架,分析新闻里出现的每一条具体交易,并给出七国的宏观投资热度排名。通过 submit_sea_analysis 工具提交。
 
 【选址评估六维度框架(仅供参考评分标准,不要在输出里逐字复述这段说明)】
 1. 能源与电力(权重38%,最重要):变电站距离与可用容量(MW)、双路供电与网架可靠性、电价走势与PPA谈判空间、绿电(风光核地热)供应充足度、是否"带电买地"绕开电网排队。
@@ -163,7 +166,7 @@ ${newsBlock}
 
 【硬性规则】
 1. deals 数组:新闻里每一条具体的"公司+拿地/签电力协议"事件各占一条。如果同一条新闻同时提到多个维度信息就都填,新闻没提到的维度必须把对应 score 字段设为 null 并在 notes 里写"新闻未披露相关信息",绝对不能编造具体数字(比如虚构MW容量、英亩数、湿球温度)。
-2. country_outlook 数组:必须覆盖全部6个国家,即使某国今天没有具体交易新闻,也要基于该国近期整体产业环境(电价政策、政府数据中心产业规划、电网建设等)给出一个持续观察层面的判断,并如实说明"今日未发现具体拿地/电力新闻"。
+2. country_outlook 数组:必须覆盖全部7个国家,即使某国今天没有具体交易新闻,也要基于该国近期整体产业环境(电价政策、政府数据中心产业规划、电网建设等)给出一个持续观察层面的判断,并如实说明"今日未发现具体拿地/电力新闻"。
 3. 引用来源一律用 [编号] 或 source_news_ids 字段填数字编号,绝对不要自己转抄网址。
 4. 所有文字用简体中文撰写,新闻标题需翻译成中文。
 5. 宁可保守打分、多用null,也不要为了看起来完整而编造数据。`;
@@ -320,7 +323,7 @@ export async function synthesizeSeaAnalysis(
     throw new Error("Claude 返回的 deals 或 country_outlook 不是数组,结构不符合预期,已放弃本次结果");
   }
 
-  const missing = (Object.keys(COUNTRY_NAMES) as SeaCountryCode[]).filter(
+  const missing = COUNTRY_CODES.filter(
     (code) => !rawReport.country_outlook.some((o) => o.country_code === code)
   );
   if (missing.length > 0) {

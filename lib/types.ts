@@ -176,7 +176,7 @@ export interface RawSynthesizedReport {
 
 // ============ Phase 2: 东南亚/亚太数据中心选址分析 ============
 
-export type SeaCountryCode = "SG" | "MY" | "TH" | "ID" | "JP" | "AU";
+export type SeaCountryCode = "SG" | "MY" | "TH" | "ID" | "JP" | "AU" | "KR";
 
 export type FitVerdict = "strong_fit" | "partial_fit" | "weak_fit" | "insufficient_data";
 

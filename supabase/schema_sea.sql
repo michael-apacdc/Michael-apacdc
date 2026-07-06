@@ -3,7 +3,7 @@
 
 -- 跟踪的国家/地区清单
 create table if not exists sea_countries (
-  code     text primary key, -- 'SG' | 'MY' | 'TH' | 'ID' | 'JP' | 'AU'
+  code     text primary key, -- 'SG' | 'MY' | 'TH' | 'ID' | 'JP' | 'AU' | 'KR'
   name_zh  text not null
 );
 
@@ -13,7 +13,8 @@ insert into sea_countries (code, name_zh) values
   ('TH', '泰国'),
   ('ID', '印度尼西亚'),
   ('JP', '日本'),
-  ('AU', '澳大利亚')
+  ('AU', '澳大利亚'),
+  ('KR', '韩国')
 on conflict (code) do nothing;
 
 -- 每天一行/每国一行:宏观投资热度排名与理由

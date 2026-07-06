@@ -26,6 +26,8 @@ const COUNTRY_QUERIES: CountryQuery[] = [
   { country: "JP", query: "Japan data center renewable nuclear power agreement" },
   { country: "AU", query: "Australia data center land power purchase agreement MW" },
   { country: "AU", query: "Australia data center renewable energy hyperscaler land" },
+  { country: "KR", query: "Korea data center land power substation MW" },
+  { country: "KR", query: "Korea data center renewable energy PPA nuclear power" },
 ];
 
 function buildGoogleNewsUrl(query: string): string {

@@ -1,5 +1,6 @@
 import { createPublicClient } from "@/lib/supabase";
-import type { SeaCountryOutlook, SeaDeal } from "@/lib/types";
+import type { SeaCountryCode, SeaCountryOutlook, SeaDeal } from "@/lib/types";
+import { SEA_COUNTRY_CODES, SEA_COUNTRY_NAMES } from "@/lib/seaCountries";
 import SeaCountryCard from "@/components/SeaCountryCard";
 import SeaDealCard from "@/components/SeaDealCard";
 import Disclaimer from "@/components/Disclaimer";
@@ -60,7 +61,7 @@ export default async function SeaPage() {
           亚太数据中心选址分析
         </h1>
         <p className="mt-1 text-sm text-muted">
-          {reportDate} · 覆盖新加坡、马来西亚、泰国、印度尼西亚、日本、澳大利亚
+          {reportDate} · 覆盖新加坡、马来西亚、泰国、印度尼西亚、日本、澳大利亚、韩国
         </p>
       </div>
 
@@ -86,20 +87,52 @@ export default async function SeaPage() {
           <span className="font-mono text-xs text-accent">B</span>
           <span className="h-px flex-1 bg-line" />
           <h2 className="text-sm font-medium tracking-wide text-foreground">
-            逐条土地/电力交易评分明细
+            逐条土地/电力交易评分明细(按国家分组)
           </h2>
         </div>
-        {deals && deals.length > 0 ? (
-          <div className="space-y-4">
-            {(deals as SeaDeal[]).map((deal) => (
-              <SeaDealCard key={deal.id} deal={deal} />
-            ))}
-          </div>
-        ) : (
-          <p className="font-mono text-xs text-muted">
-            今日未发现符合条件的具体拿地/电力交易新闻
-          </p>
-        )}
+        {(() => {
+          const dealsByCountry = new Map<SeaCountryCode, SeaDeal[]>();
+          for (const deal of (deals as SeaDeal[]) ?? []) {
+            const list = dealsByCountry.get(deal.country_code) ?? [];
+            list.push(deal);
+            dealsByCountry.set(deal.country_code, list);
+          }
+
+          const countryOrder =
+            outlooks && outlooks.length > 0
+              ? (outlooks as SeaCountryOutlook[]).map((o) => o.country_code)
+              : SEA_COUNTRY_CODES;
+
+          const groups = countryOrder.filter((code) => dealsByCountry.has(code));
+
+          if (groups.length === 0) {
+            return (
+              <p className="font-mono text-xs text-muted">
+                今日未发现符合条件的具体拿地/电力交易新闻
+              </p>
+            );
+          }
+
+          return (
+            <div className="space-y-6">
+              {groups.map((code) => (
+                <div key={code}>
+                  <h3 className="mb-3 font-mono text-sm font-semibold text-foreground">
+                    {SEA_COUNTRY_NAMES[code] ?? code}
+                    <span className="ml-2 font-mono text-xs font-normal text-muted">
+                      {dealsByCountry.get(code)!.length} 条
+                    </span>
+                  </h3>
+                  <div className="space-y-4">
+                    {dealsByCountry.get(code)!.map((deal) => (
+                      <SeaDealCard key={deal.id} deal={deal} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </section>
 
       <Disclaimer content="此分析基于公开新闻信息与用户提供的选址评估框架生成,新闻未披露的技术指标(如具体电力容量、地块面积、湿球温度等)标注为信息不足,不代表实际不满足要求,仅供研究参考,不构成正式选址或投资建议。" />

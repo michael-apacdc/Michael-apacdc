@@ -2,15 +2,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { FitVerdict, SeaDeal } from "@/lib/types";
 
-const COUNTRY_NAMES: Record<string, string> = {
-  SG: "新加坡",
-  MY: "马来西亚",
-  TH: "泰国",
-  ID: "印度尼西亚",
-  JP: "日本",
-  AU: "澳大利亚",
-};
-
 const VERDICT_STYLES: Record<FitVerdict, string> = {
   strong_fit: "bg-bullish/10 text-bullish border-bullish/30",
   partial_fit: "bg-warning/10 text-warning border-warning/30",
@@ -44,9 +35,7 @@ export default function SeaDealCard({ deal }: { deal: SeaDeal }) {
     <div className="rounded-md border border-line bg-surface p-5 transition-colors hover:border-line-strong">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <span className="font-mono text-xs text-muted">
-            {COUNTRY_NAMES[deal.country_code] ?? deal.country_code} · {deal.company}
-          </span>
+          <span className="font-mono text-xs text-muted">{deal.company}</span>
           <h3 className="text-sm font-medium text-foreground">{deal.headline}</h3>
           {deal.land_location && (
             <p className="mt-0.5 font-mono text-xs text-muted">地块:{deal.land_location}</p>

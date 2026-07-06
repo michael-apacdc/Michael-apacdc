@@ -1,15 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { SeaCountryOutlook } from "@/lib/types";
-
-const COUNTRY_NAMES: Record<string, string> = {
-  SG: "新加坡",
-  MY: "马来西亚",
-  TH: "泰国",
-  ID: "印度尼西亚",
-  JP: "日本",
-  AU: "澳大利亚",
-};
+import { SEA_COUNTRY_NAMES } from "@/lib/seaCountries";
 
 export default function SeaCountryCard({ outlook }: { outlook: SeaCountryOutlook }) {
   return (
@@ -20,7 +12,7 @@ export default function SeaCountryCard({ outlook }: { outlook: SeaCountryOutlook
             {outlook.rank_position ?? "-"}
           </span>
           <span className="font-mono text-sm font-semibold text-foreground">
-            {COUNTRY_NAMES[outlook.country_code] ?? outlook.country_code}
+            {SEA_COUNTRY_NAMES[outlook.country_code] ?? outlook.country_code}
           </span>
         </div>
         <span className="font-mono text-xs text-muted">
