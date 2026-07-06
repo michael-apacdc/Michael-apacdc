@@ -1,0 +1,25 @@
+name: Keepalive
+
+# GitHub 会在仓库连续 60 天无活动后自动停用 scheduled workflow。
+# 每日流水线本身只写数据库、不提交代码,所以需要这个每月一次的空提交
+# 来"保活",避免定时任务被静默停用。
+
+on:
+  schedule:
+    - cron: "0 0 1 * *" # 每月1号
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 空提交保活
+        run: |
+          git config user.name "keepalive-bot"
+          git config user.email "actions@github.com"
+          git commit --allow-empty -m "chore: keepalive $(date -u +%Y-%m-%d)"
+          git push

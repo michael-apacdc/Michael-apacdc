@@ -1,0 +1,21 @@
+[
+  { "ticker": "NVDA", "company_name": "NVIDIA", "category": "chipmaker" },
+  { "ticker": "AMD", "company_name": "Advanced Micro Devices", "category": "chipmaker" },
+  { "ticker": "AVGO", "company_name": "Broadcom", "category": "chipmaker" },
+  { "ticker": "TSM", "company_name": "Taiwan Semiconductor", "category": "chipmaker" },
+  { "ticker": "MRVL", "company_name": "Marvell Technology", "category": "chipmaker" },
+  { "ticker": "VST", "company_name": "Vistra", "category": "power_utility" },
+  { "ticker": "CEG", "company_name": "Constellation Energy", "category": "power_utility" },
+  { "ticker": "NEE", "company_name": "NextEra Energy", "category": "power_utility" },
+  { "ticker": "NRG", "company_name": "NRG Energy", "category": "power_utility" },
+  { "ticker": "VRT", "company_name": "Vertiv", "category": "equipment" },
+  { "ticker": "ETN", "company_name": "Eaton", "category": "equipment" },
+  { "ticker": "MSFT", "company_name": "Microsoft", "category": "hyperscaler" },
+  { "ticker": "AMZN", "company_name": "Amazon", "category": "hyperscaler" },
+  { "ticker": "GOOGL", "company_name": "Alphabet", "category": "hyperscaler" },
+  { "ticker": "ORCL", "company_name": "Oracle", "category": "hyperscaler" },
+  { "ticker": "META", "company_name": "Meta Platforms", "category": "hyperscaler" },
+  { "ticker": "EQIX", "company_name": "Equinix", "category": "colo_operator" },
+  { "ticker": "DLR", "company_name": "Digital Realty", "category": "colo_operator" },
+  { "ticker": "IRM", "company_name": "Iron Mountain", "category": "colo_operator" }
+]
