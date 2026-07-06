@@ -28,23 +28,29 @@ export default function RootLayout({
       lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
-        <header className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="font-semibold text-lg tracking-tight">
-              全球数据中心行业趋势与投资分析
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        <header className="sticky top-0 z-10 border-b border-line bg-background/80 backdrop-blur-md">
+          <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
+            <Link href="/" className="group flex items-center gap-2.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" />
+              <span className="font-mono text-[13px] font-medium tracking-tight text-foreground">
+                DATA<span className="text-accent">CENTER</span>.ANALYSIS
+              </span>
             </Link>
-            <nav className="flex gap-4 text-sm text-slate-600">
-              <Link href="/" className="hover:text-slate-900">
+            <nav className="flex gap-6 font-mono text-[13px] text-muted">
+              <Link href="/" className="transition-colors hover:text-accent">
                 最新报告
               </Link>
-              <Link href="/archive" className="hover:text-slate-900">
+              <Link href="/archive" className="transition-colors hover:text-accent">
                 历史归档
               </Link>
             </nav>
           </div>
         </header>
         <main className="flex-1">{children}</main>
+        <footer className="border-t border-line px-4 py-6 text-center font-mono text-[11px] text-muted">
+          全球数据中心行业趋势与投资分析 · 每日自动生成
+        </footer>
       </body>
     </html>
   );

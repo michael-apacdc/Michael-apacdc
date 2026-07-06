@@ -38,42 +38,45 @@ export default async function TickerPage({
   }));
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-10">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">
-          {ticker} · {ticker_info.company_name}
+        <p className="font-mono text-xs text-muted">TICKER</p>
+        <h1 className="mt-1 font-mono text-2xl font-semibold tracking-tight text-foreground">
+          {ticker} <span className="text-muted">· {ticker_info.company_name}</span>
         </h1>
-        <p className="text-sm text-slate-500">历史评级与目标价趋势</p>
+        <p className="mt-1 text-sm text-muted">历史评级与目标价趋势</p>
       </div>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6">
+      <section className="rounded-md border border-line bg-surface p-6">
         <TickerTrendChart data={chartData} />
       </section>
 
-      <section className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
+      <section className="overflow-x-auto rounded-md border border-line bg-surface">
+        <table className="w-full font-mono text-[13px]">
+          <thead className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
             <tr>
-              <th className="px-4 py-2">日期</th>
-              <th className="px-4 py-2">评级</th>
-              <th className="px-4 py-2">现价</th>
-              <th className="px-4 py-2">目标价(均)</th>
-              <th className="px-4 py-2">建议仓位</th>
-              <th className="px-4 py-2">报告</th>
+              <th className="px-4 py-3">日期</th>
+              <th className="px-4 py-3">评级</th>
+              <th className="px-4 py-3">现价</th>
+              <th className="px-4 py-3">目标价(均)</th>
+              <th className="px-4 py-3">建议仓位</th>
+              <th className="px-4 py-3">报告</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-line">
             {(history ?? []).map((row) => (
-              <tr key={row.report_date}>
-                <td className="px-4 py-2">{row.report_date}</td>
-                <td className="px-4 py-2">{RATING_LABELS[row.claude_rating] ?? row.claude_rating}</td>
-                <td className="px-4 py-2">{row.current_price ?? "N/A"}</td>
-                <td className="px-4 py-2">{row.target_price_avg ?? "N/A"}</td>
-                <td className="px-4 py-2">
+              <tr key={row.report_date} className="transition-colors hover:bg-surface-hover">
+                <td className="px-4 py-2.5 text-foreground">{row.report_date}</td>
+                <td className="px-4 py-2.5 text-foreground">
+                  {RATING_LABELS[row.claude_rating] ?? row.claude_rating}
+                </td>
+                <td className="px-4 py-2.5 text-foreground">{row.current_price ?? "N/A"}</td>
+                <td className="px-4 py-2.5 text-foreground">{row.target_price_avg ?? "N/A"}</td>
+                <td className="px-4 py-2.5 text-foreground">
                   {row.position_size_pct != null ? `${row.position_size_pct}%` : "N/A"}
                 </td>
-                <td className="px-4 py-2">
-                  <Link href={`/report/${row.report_date}`} className="text-blue-600 hover:underline">
+                <td className="px-4 py-2.5">
+                  <Link href={`/report/${row.report_date}`} className="text-accent hover:underline">
                     查看
                   </Link>
                 </td>
@@ -82,7 +85,7 @@ export default async function TickerPage({
           </tbody>
         </table>
         {(!history || history.length === 0) && (
-          <p className="p-4 text-sm text-slate-400">暂无历史数据</p>
+          <p className="p-4 font-mono text-xs text-muted">暂无历史数据</p>
         )}
       </section>
     </div>

@@ -47,42 +47,49 @@ export default async function ReportPage({
   ]);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-10">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{date} 日报</h1>
+          <p className="font-mono text-xs text-muted">DAILY REPORT</p>
+          <h1 className="mt-1 font-mono text-2xl font-semibold tracking-tight text-foreground">
+            {date}
+          </h1>
           {report.status !== "complete" && (
-            <span className="mt-1 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+            <span className="mt-2 inline-block rounded border border-warning/30 bg-warning/10 px-2.5 py-0.5 font-mono text-xs text-warning">
               部分数据源当日抓取失败,内容可能不完整
             </span>
           )}
         </div>
-        <div className="flex gap-3 text-sm">
+        <div className="flex gap-4 font-mono text-xs">
           {prev ? (
-            <Link href={`/report/${prev.report_date}`} className="text-blue-600 hover:underline">
+            <Link href={`/report/${prev.report_date}`} className="text-muted transition-colors hover:text-accent">
               ← {prev.report_date}
             </Link>
           ) : (
-            <span className="text-slate-300">← 无更早报告</span>
+            <span className="text-muted/40">← 无更早报告</span>
           )}
           {next ? (
-            <Link href={`/report/${next.report_date}`} className="text-blue-600 hover:underline">
+            <Link href={`/report/${next.report_date}`} className="text-muted transition-colors hover:text-accent">
               {next.report_date} →
             </Link>
           ) : (
-            <span className="text-slate-300">无更新报告 →</span>
+            <span className="text-muted/40">无更新报告 →</span>
           )}
         </div>
       </div>
 
-      <ReportSection title="1. 重大新闻摘要" content={report.news_summary_md} />
-      <ReportSection title="2. 亚太地区数据中心投资动态" content={report.apac_investment_md} />
-      <ReportSection title="3. 地缘政治相关报道" content={report.geopolitics_md} />
-      <ReportSection title="4. 行业趋势判断" content={report.trend_judgment_md} />
-      <ReportSection title="5. 竞争态势分析" content={report.competitive_md} />
+      <ReportSection index="01" title="重大新闻摘要" content={report.news_summary_md} />
+      <ReportSection index="02" title="亚太地区数据中心投资动态" content={report.apac_investment_md} />
+      <ReportSection index="03" title="地缘政治相关报道" content={report.geopolitics_md} />
+      <ReportSection index="04" title="行业趋势判断" content={report.trend_judgment_md} />
+      <ReportSection index="05" title="竞争态势分析" content={report.competitive_md} />
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold text-slate-900">6. 个股投资建议</h2>
+        <div className="mb-4 flex items-center gap-3">
+          <span className="font-mono text-xs text-accent">06</span>
+          <span className="h-px flex-1 bg-line" />
+          <h2 className="text-sm font-medium tracking-wide text-foreground">个股投资建议</h2>
+        </div>
         {picks && picks.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {(picks as StockPick[]).map((pick) => (
@@ -90,7 +97,7 @@ export default async function ReportPage({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-slate-400">今日暂无个股建议数据</p>
+          <p className="font-mono text-xs text-muted">今日暂无个股建议数据</p>
         )}
       </section>
 

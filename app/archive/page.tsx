@@ -17,31 +17,38 @@ export default async function ArchivePage() {
     .order("report_date", { ascending: false });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900">历史归档</h1>
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-10">
+      <div>
+        <p className="font-mono text-xs text-muted">ARCHIVE</p>
+        <h1 className="mt-1 font-mono text-2xl font-semibold tracking-tight text-foreground">
+          历史归档
+        </h1>
+      </div>
 
-      {error && <p className="text-sm text-red-600">加载失败:{error.message}</p>}
+      {error && <p className="font-mono text-xs text-bearish">加载失败:{error.message}</p>}
 
       {reports && reports.length > 0 ? (
-        <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+        <ul className="divide-y divide-line rounded-md border border-line bg-surface">
           {reports.map((r) => (
-            <li key={r.report_date} className="p-4 hover:bg-slate-50">
-              <Link href={`/report/${r.report_date}`} className="block">
+            <li key={r.report_date} className="transition-colors hover:bg-surface-hover">
+              <Link href={`/report/${r.report_date}`} className="block px-5 py-4">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-900">{r.report_date}</span>
+                  <span className="font-mono text-sm font-medium text-foreground">
+                    {r.report_date}
+                  </span>
                   {r.status !== "complete" && (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+                    <span className="rounded border border-warning/30 bg-warning/10 px-2 py-0.5 font-mono text-[10px] text-warning">
                       部分数据
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-slate-500">{excerpt(r.news_summary_md)}</p>
+                <p className="mt-1.5 text-sm text-muted">{excerpt(r.news_summary_md)}</p>
               </Link>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-400">尚无历史报告</p>
+        <p className="font-mono text-xs text-muted">尚无历史报告</p>
       )}
     </div>
   );

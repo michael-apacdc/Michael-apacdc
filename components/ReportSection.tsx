@@ -2,21 +2,27 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 export default function ReportSection({
+  index,
   title,
   content,
 }: {
+  index: string;
   title: string;
   content: string | null;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="mb-3 text-lg font-semibold text-slate-900">{title}</h2>
+    <section className="rounded-md border border-line bg-surface p-6 transition-colors hover:border-line-strong">
+      <div className="mb-4 flex items-center gap-3">
+        <span className="font-mono text-xs text-accent">{index}</span>
+        <span className="h-px flex-1 bg-line" />
+        <h2 className="text-sm font-medium tracking-wide text-foreground">{title}</h2>
+      </div>
       {content ? (
-        <div className="prose prose-slate prose-sm max-w-none prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline">
+        <div className="prose prose-invert prose-sm max-w-none prose-a:text-accent prose-a:no-underline hover:prose-a:underline">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         </div>
       ) : (
-        <p className="text-sm text-slate-400">今日暂无此板块内容</p>
+        <p className="font-mono text-xs text-muted">今日暂无此板块内容</p>
       )}
     </section>
   );
