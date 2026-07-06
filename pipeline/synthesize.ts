@@ -137,6 +137,7 @@ ${financialsBlock}
 
 【关于引用来源 —— 这是最重要的规则,必须严格遵守】
 - 引用新闻来源时,只能在正文里写 [编号] 这种形式,例如 "字节跳动宣布扩建东南亚数据中心 [12]"。编号必须对应上面新闻列表里该条新闻前面的 [编号]。
+- 如果一句话需要同时引用多条新闻,把编号写在**同一个方括号里、用逗号分隔**,例如 [12,45,103];绝对不要写成 [12][45] 这种连续相邻的方括号,那样在网页上会看起来像一串乱码数字。
 - stock_picks 和 trend_notes 里的 source_news_ids 字段也只填数字编号(如 [12, 45]),不要填网址。
 - 绝对不要在任何地方自己输出网址或写 Markdown 链接格式 [文字](网址) —— 网址由系统程序在你之后自动查表替换,你不需要也不应该知道或转抄真实网址,你转抄的网址几乎必然是错的、打不开的。
 - 如果某个判断完全是你自己的推断而非基于以上新闻/数据,不要编号,直接标注"(AI推断,无直接信源)"。
@@ -147,6 +148,7 @@ ${financialsBlock}
 3. stock_picks 需要覆盖上面列出的所有跟踪个股。
 4. 亚太地区投资动态和地缘政治板块要重点突出,不要写成泛泛而谈的套话,要引用具体新闻事件编号。
 5. 如果抓到的新闻数量很少或缺失某个地区的新闻,如实在对应板块说明"今日未抓取到该地区的相关新闻",不要编造。
+6. 排版格式(重要):news_summary_md、apac_investment_md、geopolitics_md、competitive_md 这几个板块必须用 Markdown 无序列表(每行以 "- " 开头)组织内容,每一条独立的新闻/事实各占一行,不要把多条不同的新闻揉进同一段连续文字里。可以在列表项前用"**分类词**:"这样的加粗小标题分组,但每条具体事实仍必须独立成行。trend_judgment_md 也按"需求端/供给端/电力散热/资本流向"几个维度分行列出。
 
 篇幅限制(重要,严格遵守,避免输出超长被截断):
 - news_summary_md、apac_investment_md、geopolitics_md、competitive_md:每个板块控制在300字以内。
@@ -156,13 +158,20 @@ ${financialsBlock}
 - 宁可简洁精炼,也不要因为追求详尽而导致输出被截断。`;
 }
 
-// 把正文里的 [12] 这种引用编号替换成真正可点击的 Markdown 链接 [12](真实网址)。
+// 把正文里的 [12] 或 [12,45,103] 这种引用编号替换成放大镜图标链接(每个编号一个链接),
+// 而不是直接显示数字 —— 数字挨在一起在网页上会连成一串看不清的乱码。
 // 编号无效(超出范围)时原样保留文字,不当成链接处理。
+const CITATION_ICON = "🔍";
+const CITATION_GAP = " "; // 窄空格,让相邻的引用图标之间留一点缝隙
+
 function resolveCitationsInText(text: string, urlByIndex: Map<number, string>): string {
-  return text.replace(/\[(\d{1,4})\](?!\()/g, (match, numStr) => {
-    const idx = Number(numStr);
-    const url = urlByIndex.get(idx);
-    return url ? `[${idx}](${url})` : match;
+  return text.replace(/\[(\d{1,4}(?:\s*,\s*\d{1,4})*)\](?!\()/g, (match, idsStr: string) => {
+    const links = idsStr
+      .split(",")
+      .map((s) => urlByIndex.get(Number(s.trim())))
+      .filter((url): url is string => Boolean(url))
+      .map((url) => `[${CITATION_ICON}](${url})`);
+    return links.length > 0 ? links.join(CITATION_GAP) : match;
   });
 }
 
