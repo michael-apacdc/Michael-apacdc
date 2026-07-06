@@ -147,7 +147,7 @@ export async function synthesizeReport(
 
   // 10分钟超时:大上下文+较大max_tokens的请求可能耗时较长,
   // 用流式(stream)调用而非一次性等待,避免非流式请求的连接超时限制。
-  const client = new Anthropic({ apiKey, timeout: 10 * 60 * 1000 });
+  const client = new Anthropic({ apiKey, timeout: 15 * 60 * 1000 });
   const prompt = buildPrompt(news, financials, reportDate);
 
   console.log(
@@ -156,7 +156,7 @@ export async function synthesizeReport(
 
   const stream = client.messages.stream({
     model: MODEL,
-    max_tokens: 16000,
+    max_tokens: 32000,
     tools: [REPORT_TOOL],
     tool_choice: { type: "tool", name: "submit_report" },
     messages: [{ role: "user", content: prompt }],
