@@ -2,6 +2,7 @@ import "dotenv/config";
 import { fetchAllSeaNews } from "./fetchSeaNews";
 import { synthesizeSeaAnalysis } from "./synthesizeSea";
 import { writeSeaReportToDb } from "./writeSeaToDb";
+import { filterOutSeenUrls } from "./dedup";
 
 // Anthropic claude-haiku-4-5 定价(美元/百万token),仅用于粗略估算当次花费
 const PRICE_PER_MTOK_INPUT = 1;
@@ -19,9 +20,10 @@ async function main() {
   console.log(`\n===== 亚太数据中心选址分析流水线启动:${reportDate} =====\n`);
 
   console.log("--- 步骤 1/3: 抓取选址相关新闻 ---");
-  const news = await fetchAllSeaNews();
+  let news = await fetchAllSeaNews();
+  news = await filterOutSeenUrls(news, "sea_news_items");
   if (news.length === 0) {
-    console.warn("[runSea] 未抓取到任何选址相关新闻,仍会尝试生成基于产业环境的判断");
+    console.warn("[runSea] 没有新增的选址相关新闻(可能都已在往日报告中出现过),仍会尝试生成基于产业环境的判断");
   }
 
   console.log("\n--- 步骤 2/3: 调用 Claude 生成选址分析 ---");
@@ -31,13 +33,13 @@ async function main() {
     (usage.output_tokens / 1_000_000) * PRICE_PER_MTOK_OUTPUT;
 
   console.log("\n--- 步骤 3/3: 写入数据库 ---");
-  const counts = await writeSeaReportToDb(reportDate, report);
+  const counts = await writeSeaReportToDb(reportDate, news, report);
 
   const durationMs = Date.now() - startedAt;
   console.log(`\n===== 完成 =====`);
   console.log(`报告日期: ${reportDate}`);
   console.log(
-    `写入: ${counts.dealsWritten} 条交易评分, ${counts.outlooksWritten} 个国家判断`
+    `写入: ${counts.dealsWritten} 条交易评分, ${counts.outlooksWritten} 个国家判断, ${counts.newsWritten} 条新闻存档(供以后去重比对)`
   );
   console.log(`耗时: ${(durationMs / 1000).toFixed(1)}秒`);
   console.log(`预估本次 Claude API 花费: $${estimatedCostUsd.toFixed(4)}`);

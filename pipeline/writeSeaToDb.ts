@@ -1,15 +1,31 @@
 import { createAdminClient } from "../lib/supabase";
 import type { ResolvedSeaReport } from "../lib/types";
+import type { RawSeaNewsItem } from "./fetchSeaNews";
 
 export async function writeSeaReportToDb(
   reportDate: string,
+  news: RawSeaNewsItem[],
   report: ResolvedSeaReport
-): Promise<{ dealsWritten: number; outlooksWritten: number }> {
+): Promise<{ dealsWritten: number; outlooksWritten: number; newsWritten: number }> {
   const supabase = createAdminClient();
 
   // 幂等:先删除当天旧数据再插入,方便重复手动运行做测试
   await supabase.from("sea_deals").delete().eq("report_date", reportDate);
   await supabase.from("sea_country_outlook").delete().eq("report_date", reportDate);
+  await supabase.from("sea_news_items").delete().eq("report_date", reportDate);
+
+  // 记录当天实际用到的原始新闻,供以后跨天去重比对(不用于展示)
+  const newsRows = news.map((item) => ({
+    report_date: reportDate,
+    country_code: item.sea_country,
+    headline: item.headline,
+    url: item.url,
+    source_name: item.source_name,
+  }));
+  if (newsRows.length > 0) {
+    const { error } = await supabase.from("sea_news_items").insert(newsRows);
+    if (error) throw new Error(`写入 sea_news_items 失败: ${error.message}`);
+  }
 
   const dealRows = report.deals.map((deal) => ({
     report_date: reportDate,
@@ -55,8 +71,8 @@ export async function writeSeaReportToDb(
   }
 
   console.log(
-    `[writeSeaToDb] 完成:sea_deals=${dealRows.length} sea_country_outlook=${outlookRows.length}`
+    `[writeSeaToDb] 完成:sea_deals=${dealRows.length} sea_country_outlook=${outlookRows.length} sea_news_items=${newsRows.length}`
   );
 
-  return { dealsWritten: dealRows.length, outlooksWritten: outlookRows.length };
+  return { dealsWritten: dealRows.length, outlooksWritten: outlookRows.length, newsWritten: newsRows.length };
 }

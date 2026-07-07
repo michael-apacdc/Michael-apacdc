@@ -3,6 +3,7 @@ import { fetchAllNews } from "./fetchNews";
 import { fetchAllFinancials } from "./fetchFinancials";
 import { synthesizeReport } from "./synthesize";
 import { writeReportToDb } from "./writeToDb";
+import { filterOutSeenUrls } from "./dedup";
 import type { RawFinancialData, RawNewsItem } from "../lib/types";
 
 // Anthropic claude-haiku-4-5 定价(美元/百万token),仅用于粗略估算当次花费
@@ -27,13 +28,14 @@ async function main() {
   let news: RawNewsItem[];
   try {
     news = await fetchAllNews();
+    news = await filterOutSeenUrls(news, "news_items");
   } catch (err) {
     console.error(`[run] 抓取新闻整体失败: ${(err as Error).message}`);
     news = [];
     warnings.push("新闻抓取整体失败");
   }
   if (news.length === 0) {
-    warnings.push("未抓取到任何新闻");
+    warnings.push("未抓取到任何新增新闻(近期新闻可能已在往日报告中出现过)");
   }
 
   console.log("\n--- 步骤 2/4: 抓取金融数据 ---");

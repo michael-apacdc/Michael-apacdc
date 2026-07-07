@@ -60,10 +60,25 @@ create table if not exists sea_deals (
 create index if not exists idx_sea_deals_date on sea_deals (report_date);
 create index if not exists idx_sea_deals_country on sea_deals (country_code, report_date);
 
+-- 每天抓取到的原始选址新闻(去重前),仅用于跨天比对网址、避免同一条新闻连续多天重复出现,
+-- 不做展示用途。
+create table if not exists sea_news_items (
+  id            uuid primary key default gen_random_uuid(),
+  report_date   date not null,
+  country_code  text references sea_countries(code),
+  headline      text not null,
+  url           text not null,
+  source_name   text
+);
+create index if not exists idx_sea_news_items_date on sea_news_items (report_date);
+create index if not exists idx_sea_news_items_url on sea_news_items (url);
+
 alter table sea_countries enable row level security;
 alter table sea_country_outlook enable row level security;
 alter table sea_deals enable row level security;
+alter table sea_news_items enable row level security;
 
 create policy "public read sea_countries" on sea_countries for select using (true);
 create policy "public read sea_country_outlook" on sea_country_outlook for select using (true);
 create policy "public read sea_deals" on sea_deals for select using (true);
+create policy "public read sea_news_items" on sea_news_items for select using (true);
