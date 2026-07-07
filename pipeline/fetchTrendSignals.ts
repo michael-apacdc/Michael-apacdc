@@ -63,7 +63,9 @@ async function fetchOneTicker(
       changePct1d = quotes[0].changePercentage ?? null;
     }
   } catch (err) {
-    notes.push(`现价获取失败: ${(err as Error).message}`);
+    const msg = `现价获取失败: ${(err as Error).message}`;
+    notes.push(msg);
+    console.warn(`[fetchTrendSignals]   ${ticker}: ${msg}`);
   }
 
   try {
@@ -89,7 +91,9 @@ async function fetchOneTicker(
       }
     }
   } catch (err) {
-    notes.push(`历史价格获取失败: ${(err as Error).message}`);
+    const msg = `历史价格获取失败: ${(err as Error).message}`;
+    notes.push(msg);
+    console.warn(`[fetchTrendSignals]   ${ticker}: ${msg}`);
   }
 
   let alertFlag = false;
@@ -126,7 +130,12 @@ export async function fetchAllTrendSignals(): Promise<RawTrendSignal[]> {
   const results: RawTrendSignal[] = [];
   console.log(`[fetchTrendSignals] 开始抓取 ${TREND_TICKERS.length} 支跟踪个股的价格/成交量信号...`);
 
-  for (const def of TREND_TICKERS) {
+  for (const [index, def] of TREND_TICKERS.entries()) {
+    if (index > 0) {
+      // FMP 免费版对请求速率(而非总量)有限制,连续快速请求会被限流导致后面全部失败,
+      // 每支个股之间留一点间隔。
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
     try {
       const signal = await fetchOneTicker(def.ticker, def.subsector, def.companyName, apiKey);
       results.push(signal);
