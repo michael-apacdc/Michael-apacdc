@@ -295,8 +295,11 @@ export async function synthesizeSeaAnalysis(
     }
   }
 
+  console.log(
+    `[synthesizeSea] deals类型=${Array.isArray(rawReport.deals) ? `array(${rawReport.deals.length})` : typeof rawReport.deals} country_outlook类型=${Array.isArray(rawReport.country_outlook) ? `array(${rawReport.country_outlook.length})` : typeof rawReport.country_outlook}`
+  );
   if (!Array.isArray(rawReport.deals) || !Array.isArray(rawReport.country_outlook)) {
-    console.error(`[synthesizeSea] 原始返回内容(前2000字符): ${JSON.stringify(rawReport).slice(0, 2000)}`);
+    console.error(`[synthesizeSea] 原始返回内容(前6000字符): ${JSON.stringify(rawReport).slice(0, 6000)}`);
     throw new Error("Claude 返回的 deals 或 country_outlook 不是数组,结构不符合预期,已放弃本次结果");
   }
 
