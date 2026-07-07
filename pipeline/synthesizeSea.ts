@@ -223,7 +223,11 @@ function resolveSeaCitations(raw: RawSeaReport, news: RawSeaNewsItem[]): Resolve
       climate_cooling_score: deal.climate_cooling_score,
       climate_cooling_notes_md: deal.climate_cooling_notes_md,
       risk_score: deal.risk_score,
-      risk_notes_md: deal.risk_notes_md,
+      // Haiku 偶尔会把这个字段名写成 risk_score_md 而不是 risk_notes_md,做个兼容读取
+      risk_notes_md:
+        deal.risk_notes_md ??
+        ((deal as unknown as Record<string, unknown>).risk_score_md as string | undefined) ??
+        "",
       overall_score,
       fit_verdict,
       source_urls: resolveNewsIds(deal.source_news_ids, urlByIndex),
@@ -299,7 +303,14 @@ export async function synthesizeSeaAnalysis(
     `[synthesizeSea] deals类型=${Array.isArray(rawReport.deals) ? `array(${rawReport.deals.length})` : typeof rawReport.deals} country_outlook类型=${Array.isArray(rawReport.country_outlook) ? `array(${rawReport.country_outlook.length})` : typeof rawReport.country_outlook}`
   );
   if (!Array.isArray(rawReport.deals) || !Array.isArray(rawReport.country_outlook)) {
-    console.error(`[synthesizeSea] 原始返回内容(前6000字符): ${JSON.stringify(rawReport).slice(0, 6000)}`);
+    if (!Array.isArray(rawReport.deals)) {
+      console.error(`[synthesizeSea] deals 原始内容(前3000字符): ${JSON.stringify(rawReport.deals).slice(0, 3000)}`);
+    }
+    if (!Array.isArray(rawReport.country_outlook)) {
+      console.error(
+        `[synthesizeSea] country_outlook 原始内容(全长${String(rawReport.country_outlook).length}字符,前4000字符): ${JSON.stringify(rawReport.country_outlook).slice(0, 4000)}`
+      );
+    }
     throw new Error("Claude 返回的 deals 或 country_outlook 不是数组,结构不符合预期,已放弃本次结果");
   }
 
