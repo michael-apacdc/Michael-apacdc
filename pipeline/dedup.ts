@@ -4,7 +4,7 @@ import { createAdminClient } from "../lib/supabase";
 // 过滤掉已经出现过的,只留下真正新增的新闻喂给 Claude —— 避免同一条新闻连续多天重复出现在报告里。
 export async function filterOutSeenUrls<T extends { url: string }>(
   items: T[],
-  table: "news_items" | "sea_news_items",
+  table: "news_items" | "sea_news_items" | "trend_news_items",
   lookbackDays = 14
 ): Promise<T[]> {
   if (items.length === 0) return items;

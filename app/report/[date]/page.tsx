@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createPublicClient } from "@/lib/supabase";
-import type { StockPick } from "@/lib/types";
 import ReportSection from "@/components/ReportSection";
-import StockPickCard from "@/components/StockPickCard";
 import Disclaimer from "@/components/Disclaimer";
 
 export const dynamic = "force-dynamic";
@@ -18,14 +16,11 @@ export default async function ReportPage({
 
   const supabase = createPublicClient();
 
-  const [{ data: report }, { data: picks }] = await Promise.all([
-    supabase.from("daily_reports").select("*").eq("report_date", date).maybeSingle(),
-    supabase
-      .from("stock_picks")
-      .select("*")
-      .eq("report_date", date)
-      .order("ticker", { ascending: true }),
-  ]);
+  const { data: report } = await supabase
+    .from("daily_reports")
+    .select("*")
+    .eq("report_date", date)
+    .maybeSingle();
 
   if (!report) notFound();
 
@@ -83,23 +78,6 @@ export default async function ReportPage({
       <ReportSection index="03" title="地缘政治相关报道" content={report.geopolitics_md} />
       <ReportSection index="04" title="行业趋势判断" content={report.trend_judgment_md} />
       <ReportSection index="05" title="竞争态势分析" content={report.competitive_md} />
-
-      <section>
-        <div className="mb-4 flex items-center gap-3">
-          <span className="font-mono text-xs text-accent">06</span>
-          <span className="h-px flex-1 bg-line" />
-          <h2 className="text-sm font-medium tracking-wide text-foreground">个股投资建议</h2>
-        </div>
-        {picks && picks.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {(picks as StockPick[]).map((pick) => (
-              <StockPickCard key={pick.ticker} pick={pick} />
-            ))}
-          </div>
-        ) : (
-          <p className="font-mono text-xs text-muted">今日暂无个股建议数据</p>
-        )}
-      </section>
 
       <Disclaimer content={report.disclaimer_md} />
     </div>

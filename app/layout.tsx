@@ -47,6 +47,12 @@ export default function RootLayout({
               <Link href="/sea" className="transition-colors hover:text-accent">
                 选址分析
               </Link>
+              <Link href="/quant" className="transition-colors hover:text-accent">
+                量化分析
+              </Link>
+              <Link href="/trend" className="transition-colors hover:text-accent">
+                趋势研判
+              </Link>
             </nav>
           </div>
         </header>

@@ -10,6 +10,7 @@ import type {
   SeaCountryCode,
 } from "../lib/types";
 import type { RawSeaNewsItem } from "./fetchSeaNews";
+import { buildUrlIndex, resolveCitationsInText, resolveNewsIds } from "./citations";
 
 const MODEL = "claude-haiku-4-5-20251001";
 
@@ -172,30 +173,6 @@ ${newsBlock}
 5. 宁可保守打分、多用null,也不要为了看起来完整而编造数据。`;
 }
 
-const CITATION_ICON = "🔍";
-const CITATION_GAP = " ";
-
-function resolveCitationsInText(text: string, urlByIndex: Map<number, string>): string {
-  return text.replace(/\[(\d{1,4}(?:\s*,\s*\d{1,4})*)\](?!\()/g, (match, idsStr: string) => {
-    const links = idsStr
-      .split(",")
-      .map((s: string) => urlByIndex.get(Number(s.trim())))
-      .filter((url: string | undefined): url is string => Boolean(url))
-      .map((url: string) => `[${CITATION_ICON}](${url})`);
-    return links.length > 0 ? links.join(CITATION_GAP) : match;
-  });
-}
-
-function resolveNewsIds(ids: number[] | undefined, urlByIndex: Map<number, string>): string[] {
-  if (!ids) return [];
-  const urls: string[] = [];
-  for (const id of ids) {
-    const url = urlByIndex.get(id);
-    if (url) urls.push(url);
-  }
-  return urls;
-}
-
 function computeOverallScore(deal: RawSeaDealScore): { overall_score: number; fit_verdict: FitVerdict } {
   const scored: [number, number][] = []; // [weight, score]
   const add = (weight: number, score: number | null) => {
@@ -225,7 +202,7 @@ function computeOverallScore(deal: RawSeaDealScore): { overall_score: number; fi
 }
 
 function resolveSeaCitations(raw: RawSeaReport, news: RawSeaNewsItem[]): ResolvedSeaReport {
-  const urlByIndex = new Map<number, string>(news.map((n, i) => [i + 1, n.url]));
+  const urlByIndex = buildUrlIndex(news);
 
   const deals: ResolvedSeaDeal[] = raw.deals.map((deal) => {
     const { overall_score, fit_verdict } = computeOverallScore(deal);

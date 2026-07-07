@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "pipeline": "tsx pipeline/run.ts",
-    "pipeline:sea": "tsx pipeline/runSea.ts"
+    "pipeline:sea": "tsx pipeline/runSea.ts",
+    "pipeline:trend": "tsx pipeline/runTrend.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
@@ -17,7 +18,6 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
-    "recharts": "^3.9.2",
     "remark-gfm": "^4.0.1",
     "rss-parser": "^3.13.0"
   },
