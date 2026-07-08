@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeFScore, computeZScore, type AnnualFinancials } from "@/lib/quant";
 import { lookupCik, fetchCompanyFacts, extractTwoYearFinancials, type SecAnnualFinancials } from "@/lib/secEdgar";
-import { fetchYahooPrice } from "@/lib/yahooFinance";
+import { fetchYahooPrice, fetchYahooPriceHistory } from "@/lib/yahooFinance";
+import { MONEY_FLOW_QUADRANT_LABELS } from "@/lib/trendSubsectors";
 
 function toAnnualFinancials(s: SecAnnualFinancials): AnnualFinancials {
   return {
@@ -36,9 +37,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const [facts, currentPrice] = await Promise.all([
+    const [facts, currentPrice, priceHistory] = await Promise.all([
       fetchCompanyFacts(cikInfo.cik),
       fetchYahooPrice(symbol),
+      fetchYahooPriceHistory(symbol),
     ]);
 
     const financials = extractTwoYearFinancials(facts);
@@ -77,6 +79,19 @@ export async function GET(request: NextRequest) {
       },
       fScore,
       zScore,
+      priceTrend: priceHistory
+        ? {
+            points: priceHistory.points,
+            changePct1d: priceHistory.changePct1d,
+            changePct5d: priceHistory.changePct5d,
+            changePct20d: priceHistory.changePct20d,
+            avgVolume20d: priceHistory.avgVolume20d,
+            latestVolume: priceHistory.latestVolume,
+            relativeVolume: priceHistory.relativeVolume,
+            quadrant: priceHistory.quadrant,
+            quadrantLabel: MONEY_FLOW_QUADRANT_LABELS[priceHistory.quadrant],
+          }
+        : null,
       dataSourceNote:
         financials.missingConcepts.length > 0
           ? `以下科目未能从SEC财报中找到,已按0处理,可能影响对应评分项:${financials.missingConcepts.join(", ")}`

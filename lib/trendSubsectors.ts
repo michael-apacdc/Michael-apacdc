@@ -44,6 +44,18 @@ function average(values: number[]): number | null {
   return Number((values.reduce((a, b) => a + b, 0) / values.length).toFixed(2));
 }
 
+// 通用象限分类规则,供"板块汇总"和"单只个股"共用同一套口径(量化分析模块的个股资金走势也用这个)。
+export function classifyMoneyFlowQuadrant(
+  changePct5d: number | null,
+  relativeVolume: number | null
+): MoneyFlowQuadrant {
+  if (changePct5d == null || relativeVolume == null) return "quiet";
+  if (changePct5d > 0 && relativeVolume > 1) return "inflow";
+  if (changePct5d <= 0 && relativeVolume > 1) return "outflow";
+  if (changePct5d > 0 && relativeVolume <= 1) return "weak_rally";
+  return "quiet";
+}
+
 export function computeSubsectorAggregate(
   subsectorCode: TrendSubsectorCode,
   signals: SubsectorSignalLike[]
@@ -56,13 +68,7 @@ export function computeSubsectorAggregate(
   const avgChangePct5d = average(changePct5dValues);
   const avgRelativeVolume = average(relativeVolumeValues);
 
-  let quadrant: MoneyFlowQuadrant = "quiet";
-  if (avgChangePct5d != null && avgRelativeVolume != null) {
-    if (avgChangePct5d > 0 && avgRelativeVolume > 1) quadrant = "inflow";
-    else if (avgChangePct5d <= 0 && avgRelativeVolume > 1) quadrant = "outflow";
-    else if (avgChangePct5d > 0 && avgRelativeVolume <= 1) quadrant = "weak_rally";
-    else quadrant = "quiet";
-  }
+  const quadrant = classifyMoneyFlowQuadrant(avgChangePct5d, avgRelativeVolume);
 
   return {
     subsectorCode,
