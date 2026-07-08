@@ -3,6 +3,7 @@ import { fetchAllSeaNews } from "./fetchSeaNews";
 import { synthesizeSeaAnalysis } from "./synthesizeSea";
 import { writeSeaReportToDb } from "./writeSeaToDb";
 import { filterOutSeenUrls } from "./dedup";
+import { withRetry } from "./retry";
 
 // Anthropic claude-haiku-4-5 定价(美元/百万token),仅用于粗略估算当次花费
 const PRICE_PER_MTOK_INPUT = 1;
@@ -27,7 +28,11 @@ async function main() {
   }
 
   console.log("\n--- 步骤 2/3: 调用 Claude 生成选址分析 ---");
-  const { report, usage } = await synthesizeSeaAnalysis(news, reportDate);
+  const { report, usage } = await withRetry(
+    () => synthesizeSeaAnalysis(news, reportDate),
+    3,
+    "synthesizeSeaAnalysis"
+  );
   const estimatedCostUsd =
     (usage.input_tokens / 1_000_000) * PRICE_PER_MTOK_INPUT +
     (usage.output_tokens / 1_000_000) * PRICE_PER_MTOK_OUTPUT;

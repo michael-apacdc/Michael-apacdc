@@ -4,6 +4,7 @@ import { fetchAllTrendNews } from "./fetchTrendNews";
 import { synthesizeTrendAnalysis } from "./synthesizeTrend";
 import { writeTrendReportToDb } from "./writeTrendToDb";
 import { filterOutSeenUrls } from "./dedup";
+import { withRetry } from "./retry";
 
 // Anthropic claude-haiku-4-5 定价(美元/百万token),仅用于粗略估算当次花费
 const PRICE_PER_MTOK_INPUT = 1;
@@ -33,7 +34,11 @@ async function main() {
   }
 
   console.log("\n--- 步骤 3/4: 调用 Claude 生成趋势研判 ---");
-  const { report, usage } = await synthesizeTrendAnalysis(news, signals, reportDate);
+  const { report, usage } = await withRetry(
+    () => synthesizeTrendAnalysis(news, signals, reportDate),
+    3,
+    "synthesizeTrendAnalysis"
+  );
   const estimatedCostUsd =
     (usage.input_tokens / 1_000_000) * PRICE_PER_MTOK_INPUT +
     (usage.output_tokens / 1_000_000) * PRICE_PER_MTOK_OUTPUT;

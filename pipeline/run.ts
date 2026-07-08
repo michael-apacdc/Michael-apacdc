@@ -3,6 +3,7 @@ import { fetchAllNews } from "./fetchNews";
 import { synthesizeReport } from "./synthesize";
 import { writeReportToDb } from "./writeToDb";
 import { filterOutSeenUrls } from "./dedup";
+import { withRetry } from "./retry";
 import type { RawNewsItem } from "../lib/types";
 
 // Anthropic claude-haiku-4-5 定价(美元/百万token),仅用于粗略估算当次花费
@@ -38,7 +39,7 @@ async function main() {
   }
 
   console.log("\n--- 步骤 2/3: 调用 Claude 生成分析 ---");
-  const { report, usage } = await synthesizeReport(news, reportDate);
+  const { report, usage } = await withRetry(() => synthesizeReport(news, reportDate), 3, "synthesizeReport");
   const estimatedCostUsd =
     (usage.input_tokens / 1_000_000) * PRICE_PER_MTOK_INPUT +
     (usage.output_tokens / 1_000_000) * PRICE_PER_MTOK_OUTPUT;
