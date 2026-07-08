@@ -1,53 +1,56 @@
 import type { RawTrendSignal } from "../lib/types";
 import { TREND_TICKERS } from "./trendTickers";
 
-const FMP_BASE = "https://financialmodelingprep.com/stable";
+// Yahoo Finance 的公开图表接口:不需要API key,对中小盘股票也没有"仅开放大盘股"的限制
+// (FMP免费版实测只对NVDA/AMD/TSM等极少数大盘股返回数据,其余全部HTTP 402,换成这个)。
+// 一次请求同时拿到现价和约1个月的历史K线,比原来调用两个FMP接口更省事。
+const YAHOO_CHART_BASE = "https://query1.finance.yahoo.com/v8/finance/chart";
 const CHANGE_ALERT_THRESHOLD_PCT = 5; // 单日涨跌幅超过这个百分比触发预警
 const RELATIVE_VOLUME_ALERT_THRESHOLD = 2.5; // 成交量超过20日均量的这个倍数触发预警
 
-let requestCount = 0;
+interface YahooChartResponse {
+  chart: {
+    result: [
+      {
+        meta: {
+          regularMarketPrice: number;
+        };
+        timestamp: number[];
+        indicators: {
+          quote: [
+            {
+              close: (number | null)[];
+              volume: (number | null)[];
+            },
+          ];
+        };
+      },
+    ] | null;
+    error: { code: string; description: string } | null;
+  };
+}
 
-async function fmpGet<T>(endpoint: string, params: Record<string, string>, apiKey: string): Promise<T> {
-  requestCount += 1;
-  const query = new URLSearchParams({ ...params, apikey: apiKey });
-  const url = `${FMP_BASE}/${endpoint}?${query.toString()}`;
-  const res = await fetch(url);
-  const body = await res.json().catch(() => null);
-  if (!res.ok || (body && typeof body === "object" && !Array.isArray(body) && "Error Message" in body)) {
-    const message =
-      body && typeof body === "object" && "Error Message" in body
-        ? (body as { "Error Message": string })["Error Message"]
-        : `HTTP ${res.status}`;
-    throw new Error(`FMP ${endpoint} 失败: ${message}`);
+async function fetchYahooChart(ticker: string): Promise<YahooChartResponse> {
+  const url = `${YAHOO_CHART_BASE}/${encodeURIComponent(ticker)}?range=2mo&interval=1d`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+      Accept: "application/json",
+    },
+  });
+  const body = (await res.json().catch(() => null)) as YahooChartResponse | null;
+  if (!res.ok || !body || body.chart.error) {
+    const message = body?.chart?.error?.description ?? `HTTP ${res.status}`;
+    throw new Error(`Yahoo Finance 获取失败: ${message}`);
   }
-  return body as T;
-}
-
-interface FmpQuote {
-  price: number;
-  changePercentage: number;
-  volume: number;
-}
-
-interface FmpHistoricalBar {
-  date: string;
-  price: number;
-  volume: number;
-}
-
-function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function daysAgoIsoDate(days: number): string {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return body;
 }
 
 async function fetchOneTicker(
   ticker: string,
   subsector: string,
-  companyName: string,
-  apiKey: string
+  companyName: string
 ): Promise<RawTrendSignal> {
   let price: number | null = null;
   let changePct1d: number | null = null;
@@ -57,41 +60,52 @@ async function fetchOneTicker(
   const notes: string[] = [];
 
   try {
-    const quotes = await fmpGet<FmpQuote[]>("quote", { symbol: ticker }, apiKey);
-    if (quotes?.[0]) {
-      price = quotes[0].price ?? null;
-      changePct1d = quotes[0].changePercentage ?? null;
-    }
-  } catch (err) {
-    const msg = `现价获取失败: ${(err as Error).message}`;
-    notes.push(msg);
-    console.warn(`[fetchTrendSignals]   ${ticker}: ${msg}`);
-  }
+    const data = await fetchYahooChart(ticker);
+    const result = data.chart.result?.[0];
+    if (!result) throw new Error("返回结果为空");
 
-  try {
-    const bars = await fmpGet<FmpHistoricalBar[]>(
-      "historical-price-eod/light",
-      { symbol: ticker, from: daysAgoIsoDate(35), to: todayIsoDate() },
-      apiKey
-    );
-    const sorted = [...(bars ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1)); // 最新在前
-    if (sorted.length >= 6) {
-      const latestClose = sorted[0].price;
-      const fiveDaysAgoClose = sorted[5].price;
+    const closes = result.indicators.quote[0].close;
+    const volumes = result.indicators.quote[0].volume;
+
+    // 过滤掉当天可能存在的 null(盘中/刚收盘时最后一条有时还没有数据)
+    const validIdx: number[] = [];
+    for (let i = 0; i < closes.length; i++) {
+      if (closes[i] != null) validIdx.push(i);
+    }
+
+    const latestIdx = validIdx[validIdx.length - 1];
+    const latestClose = latestIdx != null ? closes[latestIdx] : null;
+    price = result.meta.regularMarketPrice ?? latestClose ?? null;
+
+    // 涨跌幅统一用K线数组本身前后两天算,不要用 meta.previousClose / chartPreviousClose
+    // —— chartPreviousClose 是"整个图表区间起始日"的收盘价,不是"昨天",混用会算出离谱的涨跌幅。
+    if (validIdx.length >= 2 && latestClose != null) {
+      const prevIdx = validIdx[validIdx.length - 2];
+      const prevClose = closes[prevIdx];
+      if (prevClose) {
+        changePct1d = Number((((latestClose - prevClose) / prevClose) * 100).toFixed(2));
+      }
+    }
+
+    if (validIdx.length >= 6 && latestClose != null) {
+      const fiveDaysAgoIdx = validIdx[validIdx.length - 6];
+      const fiveDaysAgoClose = closes[fiveDaysAgoIdx];
       if (fiveDaysAgoClose) {
         changePct5d = Number((((latestClose - fiveDaysAgoClose) / fiveDaysAgoClose) * 100).toFixed(2));
       }
     }
-    const volumeWindow = sorted.slice(0, 20).map((b) => b.volume).filter((v) => typeof v === "number");
+
+    const last20Idx = validIdx.slice(-20);
+    const volumeWindow = last20Idx.map((i) => volumes[i]).filter((v): v is number => typeof v === "number");
     if (volumeWindow.length > 0) {
       avgVolume20d = Math.round(volumeWindow.reduce((a, b) => a + b, 0) / volumeWindow.length);
-      const todayVolume = sorted[0]?.volume;
+      const todayVolume = latestIdx != null ? volumes[latestIdx] : null;
       if (todayVolume && avgVolume20d > 0) {
         relativeVolume = Number((todayVolume / avgVolume20d).toFixed(2));
       }
     }
   } catch (err) {
-    const msg = `历史价格获取失败: ${(err as Error).message}`;
+    const msg = `获取失败: ${(err as Error).message}`;
     notes.push(msg);
     console.warn(`[fetchTrendSignals]   ${ticker}: ${msg}`);
   }
@@ -122,22 +136,15 @@ async function fetchOneTicker(
 }
 
 export async function fetchAllTrendSignals(): Promise<RawTrendSignal[]> {
-  const apiKey = process.env.FMP_API_KEY;
-  if (!apiKey) {
-    throw new Error("缺少 FMP_API_KEY 环境变量");
-  }
-
   const results: RawTrendSignal[] = [];
-  console.log(`[fetchTrendSignals] 开始抓取 ${TREND_TICKERS.length} 支跟踪个股的价格/成交量信号...`);
+  console.log(`[fetchTrendSignals] 开始抓取 ${TREND_TICKERS.length} 支跟踪个股的价格/成交量信号(数据源:Yahoo Finance)...`);
 
   for (const [index, def] of TREND_TICKERS.entries()) {
     if (index > 0) {
-      // FMP 免费版对请求速率(而非总量)有限制,连续快速请求会被限流导致后面全部失败,
-      // 每支个股之间留一点间隔。
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
     try {
-      const signal = await fetchOneTicker(def.ticker, def.subsector, def.companyName, apiKey);
+      const signal = await fetchOneTicker(def.ticker, def.subsector, def.companyName);
       results.push(signal);
       console.log(
         `[fetchTrendSignals]   ${def.ticker}: 现价=${signal.price ?? "N/A"} 1日=${signal.change_pct_1d ?? "N/A"}% 5日=${signal.change_pct_5d ?? "N/A"}% 相对量=${signal.relative_volume ?? "N/A"}${signal.alert_flag ? " [预警]" : ""}`
@@ -159,6 +166,6 @@ export async function fetchAllTrendSignals(): Promise<RawTrendSignal[]> {
     }
   }
 
-  console.log(`[fetchTrendSignals] 完成,共发出约 ${requestCount} 次 FMP 请求`);
+  console.log(`[fetchTrendSignals] 完成`);
   return results;
 }
