@@ -10,6 +10,7 @@ import type {
 import type { RawTrendNewsItem } from "./fetchTrendNews";
 import { buildUrlIndex, resolveCitationsInText, resolveNewsIds } from "./citations";
 import { TREND_SUBSECTOR_CODES, TREND_SUBSECTOR_NAMES } from "./trendTickers";
+import { computeSubsectorAggregate, MONEY_FLOW_QUADRANT_LABELS } from "../lib/trendSubsectors";
 
 const MODEL = "claude-haiku-4-5-20251001";
 
@@ -65,8 +66,8 @@ function buildPrompt(news: RawTrendNewsItem[], signals: RawTrendSignal[], report
     .join("\n\n");
 
   const signalsBySubsector = TREND_SUBSECTOR_CODES.map((code) => {
-    const rows = signals
-      .filter((s) => s.subsector_code === code)
+    const subsectorSignals = signals.filter((s) => s.subsector_code === code);
+    const rows = subsectorSignals
       .map((s) => {
         const parts = [
           `${s.ticker}(${s.company_name}): 现价=${s.price ?? "N/A"}`,
@@ -78,7 +79,14 @@ function buildPrompt(news: RawTrendNewsItem[], signals: RawTrendSignal[], report
         return parts.join(", ");
       })
       .join("\n");
-    return `【${TREND_SUBSECTOR_NAMES[code]}(${code})】\n${rows || "(无跟踪个股数据)"}`;
+
+    const agg = computeSubsectorAggregate(code, subsectorSignals);
+    const aggLine =
+      agg.avgChangePct5d != null && agg.avgRelativeVolume != null
+        ? `板块汇总(程序计算,非AI判断): 平均5日动量=${agg.avgChangePct5d}%, 平均相对成交量=${agg.avgRelativeVolume}倍 → 象限归类: ${MONEY_FLOW_QUADRANT_LABELS[agg.quadrant]}`
+        : `板块汇总: 数据不足,无法归类象限`;
+
+    return `【${TREND_SUBSECTOR_NAMES[code]}(${code})】\n${rows || "(无跟踪个股数据)"}\n${aggLine}`;
   }).join("\n\n");
 
   return `你是一名专注于"AI产业链美股"的资深行业研究分析师。今天是 ${reportDate}。
@@ -94,7 +102,7 @@ ${signalsBySubsector}
 请针对全部6个细分行业分别给出趋势研判,通过 submit_trend_analysis 工具提交。硬性规则:
 
 1. trend_direction 是你基于新闻+价格信号的综合判断:warming(升温)/ cooling(降温)/ stable(平稳)/ mixed(分化)。
-2. summary_md 结合新闻和上面提供的具体数字(现价、涨跌幅、相对成交量)给出研判,不要只讲新闻不提数字,也不要凭空编造数字——所有数字必须来自上面提供的信号数据。
+2. summary_md 结合新闻和上面提供的具体数字(现价、涨跌幅、相对成交量)给出研判,不要只讲新闻不提数字,也不要凭空编造数字——所有数字必须来自上面提供的信号数据。**必须明确点评该板块"整体资金走势"**,直接引用上面"板块汇总"给出的象限归类结论(资金流入/资金流出/缩量上涨/低迷),并结合新闻解释可能的原因,不要只谈个股不谈板块整体。
 3. alert_summary_md:只有当上面信号里出现"程序预警"标记的个股时才填写,结合新闻解读可能的原因(比如是否有相关新闻能解释这次异常波动);如果该行业没有任何预警标记,必须填 null,不要臆测不存在的预警。
 4. 引用来源一律用 [编号] 或 source_news_ids 字段填数字编号,绝对不要自己转抄网址。
 5. 所有文字用简体中文撰写,新闻标题如需引用需翻译成中文。

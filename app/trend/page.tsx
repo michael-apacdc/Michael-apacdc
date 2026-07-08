@@ -1,8 +1,9 @@
 import { createPublicClient } from "@/lib/supabase";
 import type { TrendSubsectorSnapshot, TrendTickerSignal } from "@/lib/types";
-import { TREND_SUBSECTOR_CODES, TREND_SUBSECTOR_NAMES } from "@/lib/trendSubsectors";
+import { TREND_SUBSECTOR_CODES, TREND_SUBSECTOR_NAMES, computeSubsectorAggregate } from "@/lib/trendSubsectors";
 import TrendSubsectorCard from "@/components/TrendSubsectorCard";
 import TrendSignalTable from "@/components/TrendSignalTable";
+import TrendQuadrantChart from "@/components/TrendQuadrantChart";
 import Disclaimer from "@/components/Disclaimer";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,10 @@ export default async function TrendPage() {
 
   const totalAlerts = (signals as TrendTickerSignal[] | null)?.filter((s) => s.alert_flag).length ?? 0;
 
+  const aggregates = TREND_SUBSECTOR_CODES.map((code) =>
+    computeSubsectorAggregate(code, signalsByCode.get(code) ?? [])
+  );
+
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-10">
       <div>
@@ -74,23 +79,43 @@ export default async function TrendPage() {
         </p>
       </div>
 
-      <div className="space-y-6">
+      <section>
+        <div className="mb-4 flex items-center gap-3">
+          <span className="font-mono text-xs text-accent">A</span>
+          <span className="h-px flex-1 bg-line" />
+          <h2 className="text-sm font-medium tracking-wide text-foreground">资金走势象限图</h2>
+        </div>
+        <div className="rounded-md border border-line bg-surface p-5">
+          <TrendQuadrantChart aggregates={aggregates} />
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-center gap-3">
+          <span className="font-mono text-xs text-accent">B</span>
+          <span className="h-px flex-1 bg-line" />
+          <h2 className="text-sm font-medium tracking-wide text-foreground">细分行业逐一研判</h2>
+        </div>
+        <div className="space-y-6">
         {TREND_SUBSECTOR_CODES.map((code) => {
           const snapshot = snapshotByCode.get(code) ?? null;
           const tickerSignals = signalsByCode.get(code) ?? [];
           const alertCount = tickerSignals.filter((s) => s.alert_flag).length;
+          const aggregate = aggregates.find((a) => a.subsectorCode === code)!;
           return (
             <div key={code} className="space-y-3">
               <TrendSubsectorCard
                 name={TREND_SUBSECTOR_NAMES[code]}
                 snapshot={snapshot}
                 alertCount={alertCount}
+                aggregate={aggregate}
               />
               <TrendSignalTable signals={tickerSignals} />
             </div>
           );
         })}
-      </div>
+        </div>
+      </section>
 
       <Disclaimer content="此模块的“趋势研判”是基于公开新闻与价格/成交量的免费代理指标(相对成交量等)由AI综合解读的方向性研究,不是量化预测模型,也没有经过历史回测验证准确率;真实的机构资金流数据通常为付费终端提供,这里未使用。预警标记由程序按固定规则(单日涨跌超过5%或成交量超过20日均量2.5倍)自动触发,仅提示需要关注,不代表买卖建议。仅供研究参考,不构成正式投资建议。" />
     </div>
