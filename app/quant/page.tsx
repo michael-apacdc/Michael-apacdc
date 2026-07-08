@@ -17,6 +17,7 @@ interface QuantResult {
   };
   fScore: { score: number; maxScore: number; criteria: { key: string; label: string; passed: boolean; detail: string }[] };
   zScore: { score: number; zone: string; components: { label: string; value: number }[] };
+  dataSourceNote: string | null;
 }
 
 function fmt(n: number | null, digits = 2): string {
@@ -110,20 +111,23 @@ export default function QuantPage() {
             <div className="mt-3 grid grid-cols-3 gap-2 font-mono text-xs">
               <div className="rounded border border-line bg-background/40 p-2 text-center">
                 <div className="text-foreground">{fmt(result.valuation.peRatio)}</div>
-                <div className="text-[10px] text-muted">PE (TTM)</div>
+                <div className="text-[10px] text-muted">PE(最近财年)</div>
               </div>
               <div className="rounded border border-line bg-background/40 p-2 text-center">
                 <div className="text-foreground">{fmt(result.valuation.priceToBook)}</div>
-                <div className="text-[10px] text-muted">P/B (TTM)</div>
+                <div className="text-[10px] text-muted">P/B(最近财年)</div>
               </div>
               <div className="rounded border border-line bg-background/40 p-2 text-center">
                 <div className="text-foreground">{fmt(result.valuation.evToEbitda)}</div>
-                <div className="text-[10px] text-muted">EV/EBITDA (TTM)</div>
+                <div className="text-[10px] text-muted">EV/EBITDA</div>
               </div>
             </div>
             <p className="mt-2 font-mono text-[11px] text-muted">
-              财报对比区间:{result.dataYears.prior} → {result.dataYears.current}
+              财报对比区间:{result.dataYears.prior} → {result.dataYears.current}(数据来自 SEC EDGAR 官方财报)
             </p>
+            {result.dataSourceNote && (
+              <p className="mt-1 font-mono text-[11px] text-warning">{result.dataSourceNote}</p>
+            )}
           </div>
 
           <FScoreCard
