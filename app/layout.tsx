@@ -54,7 +54,7 @@ export default function RootLayout({
                 趋势研判
               </Link>
               <Link href="/portfolio" className="transition-colors hover:text-accent">
-                我的持仓
+                AI强弱
               </Link>
             </nav>
           </div>

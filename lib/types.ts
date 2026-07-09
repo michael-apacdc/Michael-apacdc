@@ -287,58 +287,51 @@ export interface ResolvedTrendReport {
   subsectors: ResolvedTrendSubsectorJudgment[];
 }
 
-// ============ Phase 4: 我的持仓量化监控与买卖预警 ============
+// ============ Phase 4(重构): AI板块横截面相对强弱模型(观察验证模式) ============
 
-export type PortfolioAction = "hold" | "add" | "trim" | "sell" | "watch";
-
-export interface PortfolioHolding {
-  ticker: string;
-  company_name: string;
-  shares: number | null;
-  cost_basis: number | null;
-  active: boolean;
-}
-
-export interface PortfolioSignal {
+export interface AiQuantScoreRow {
   id: string;
   report_date: string;
   ticker: string;
-  price: number | null;
-  change_pct_1d: number | null;
-  relative_volume: number | null;
-  sma50: number | null;
-  sma200: number | null;
-  trend_state: "above_200" | "below_200" | "unknown";
-  momentum_12_1: number | null;
-  momentum_rank: number | null;
-  rsi14: number | null;
-  drawdown_pct: number | null;
-  action: PortfolioAction;
-  action_reasons: string[];
-  alert_flag: boolean;
+  subsector: string;
+  score: number | null;
+  rank_position: number | null;
+  factor_z: Record<string, number | null> | null;
 }
 
-export interface PortfolioSnapshot {
+export interface AiQuantPickRow {
   id: string;
   report_date: string;
-  total_alerts: number;
+  ticker: string;
+  rank_position: number;
+  score: number | null;
+  entry_adjclose: number;
+  resolved: boolean;
+  resolve_date: string | null;
+  fwd_return_pct: number | null;
+  basket_return_pct: number | null;
+  excess_return_pct: number | null;
+  hit: boolean | null;
+}
+
+export interface AiQuantSnapshotRow {
+  id: string;
+  report_date: string;
+  weights: Record<string, number>;
   commentary_md: string | null;
-  rotation_md: string | null;
-  email_sent: boolean;
+  resolved_picks: number;
+  resolved_hits: number;
+  avg_excess_pct: number | null;
+  day_windows: number;
+  day_wins: number;
 }
 
-export type BacktestStrategy = "buy_hold" | "trend_200" | "momentum_rotation";
-
-export interface PortfolioBacktestRow {
+export interface AiQuantValidationRow {
   id: string;
-  ticker: string; // 个股代码,或 'PORTFOLIO'
-  strategy: BacktestStrategy;
-  start_date: string;
-  end_date: string;
-  cagr_pct: number | null;
-  max_drawdown_pct: number | null;
-  volatility_pct: number | null;
-  sharpe: number | null;
-  trade_count: number | null;
-  updated_at: string;
+  period_label: string; // 'YYYY-QN' 或 'TOTAL'
+  wins: number;
+  windows: number;
+  strat_return_pct: number | null;
+  basket_return_pct: number | null;
+  excess_pp: number | null;
 }

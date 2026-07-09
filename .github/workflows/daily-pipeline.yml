@@ -41,13 +41,10 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-      - name: 运行每日流水线(持仓量化监控与买卖预警)
-        run: npx tsx pipeline/runPortfolio.ts
+      - name: 运行每日流水线(AI板块相对强弱模型·观察验证)
+        run: npx tsx pipeline/runAiQuant.ts
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
-          SITE_URL: ${{ secrets.SITE_URL }}
