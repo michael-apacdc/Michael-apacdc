@@ -20,7 +20,9 @@ jobs:
 
       - run: npm ci
 
+      # 四条流水线互相独立:某一条失败不影响其余(!cancelled() = 前面步骤失败也继续,手动取消才停)
       - name: 运行每日流水线(行业日报)
+        if: ${{ !cancelled() }}
         run: npx tsx pipeline/run.ts
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -28,6 +30,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: 运行每日流水线(亚太选址分析)
+        if: ${{ !cancelled() }}
         run: npx tsx pipeline/runSea.ts
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -35,6 +38,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: 运行每日流水线(美股趋势研判与预警)
+        if: ${{ !cancelled() }}
         run: npx tsx pipeline/runTrend.ts
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -42,6 +46,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: 运行每日流水线(AI板块相对强弱模型·观察验证)
+        if: ${{ !cancelled() }}
         run: npx tsx pipeline/runAiQuant.ts
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
