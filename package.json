@@ -9,7 +9,8 @@
     "lint": "eslint",
     "pipeline": "tsx pipeline/run.ts",
     "pipeline:sea": "tsx pipeline/runSea.ts",
-    "pipeline:trend": "tsx pipeline/runTrend.ts"
+    "pipeline:trend": "tsx pipeline/runTrend.ts",
+    "pipeline:portfolio": "tsx pipeline/runPortfolio.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

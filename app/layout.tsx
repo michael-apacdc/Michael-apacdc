@@ -53,6 +53,9 @@ export default function RootLayout({
               <Link href="/trend" className="transition-colors hover:text-accent">
                 趋势研判
               </Link>
+              <Link href="/portfolio" className="transition-colors hover:text-accent">
+                我的持仓
+              </Link>
             </nav>
           </div>
         </header>

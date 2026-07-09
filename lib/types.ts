@@ -286,3 +286,59 @@ export interface ResolvedTrendSubsectorJudgment
 export interface ResolvedTrendReport {
   subsectors: ResolvedTrendSubsectorJudgment[];
 }
+
+// ============ Phase 4: 我的持仓量化监控与买卖预警 ============
+
+export type PortfolioAction = "hold" | "add" | "trim" | "sell" | "watch";
+
+export interface PortfolioHolding {
+  ticker: string;
+  company_name: string;
+  shares: number | null;
+  cost_basis: number | null;
+  active: boolean;
+}
+
+export interface PortfolioSignal {
+  id: string;
+  report_date: string;
+  ticker: string;
+  price: number | null;
+  change_pct_1d: number | null;
+  relative_volume: number | null;
+  sma50: number | null;
+  sma200: number | null;
+  trend_state: "above_200" | "below_200" | "unknown";
+  momentum_12_1: number | null;
+  momentum_rank: number | null;
+  rsi14: number | null;
+  drawdown_pct: number | null;
+  action: PortfolioAction;
+  action_reasons: string[];
+  alert_flag: boolean;
+}
+
+export interface PortfolioSnapshot {
+  id: string;
+  report_date: string;
+  total_alerts: number;
+  commentary_md: string | null;
+  rotation_md: string | null;
+  email_sent: boolean;
+}
+
+export type BacktestStrategy = "buy_hold" | "trend_200" | "momentum_rotation";
+
+export interface PortfolioBacktestRow {
+  id: string;
+  ticker: string; // 个股代码,或 'PORTFOLIO'
+  strategy: BacktestStrategy;
+  start_date: string;
+  end_date: string;
+  cagr_pct: number | null;
+  max_drawdown_pct: number | null;
+  volatility_pct: number | null;
+  sharpe: number | null;
+  trade_count: number | null;
+  updated_at: string;
+}
